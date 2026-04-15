@@ -34,31 +34,46 @@ function getRandomHeaders(): Record<string, string> {
   };
 }
 
-const DELAY_MIN_MS = 500;
-const DELAY_MAX_MS = 1500;
+const DELAY_MIN_MS = 200;
+const DELAY_MAX_MS = 400;
 const PAGE_SIZE = 20;
-const MAX_BINARY_SEARCH_ITERATIONS = 6;
+const MAX_BINARY_SEARCH_STEPS = 18;
+const BOJ_FETCH_TIMEOUT_MS = 7000;
+const REQUEST_DEADLINE_MS = 45_000;
 
 async function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function fetchBoj(url: string): Promise<string> {
-  await sleep(DELAY_MIN_MS + Math.random() * (DELAY_MAX_MS - DELAY_MIN_MS));
-  const res = await fetch(url, { headers: getRandomHeaders() });
-  if (!res.ok) throw new Error(`BOJ 응답 오류: ${res.status}`);
-  return res.text();
+function ensureWithinDeadline(startedAtMs: number): void {
+  if (Date.now() - startedAtMs > REQUEST_DEADLINE_MS) {
+    throw new Error('요청 시간이 초과되었습니다');
+  }
 }
 
-async function fetchProblemTitle(problemId: string): Promise<string> {
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const res = await fetch(`${BOJ_BASE}/problem/${problemId}`, { headers: getRandomHeaders() });
-    if (!res.ok) return '';
-    const $ = load(await res.text());
-    return $('#problem_title').text().trim();
-  } catch {
-    return '';
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
+
+async function fetchBoj(url: string, startedAtMs: number): Promise<string> {
+  ensureWithinDeadline(startedAtMs);
+  await sleep(DELAY_MIN_MS + Math.random() * (DELAY_MAX_MS - DELAY_MIN_MS));
+  ensureWithinDeadline(startedAtMs);
+
+  const res = await fetchWithTimeout(
+    url,
+    { headers: getRandomHeaders() },
+    BOJ_FETCH_TIMEOUT_MS,
+  );
+  if (!res.ok) throw new Error(`BOJ 응답 오류: ${res.status}`);
+  return res.text();
 }
 
 type ParsedPage = {
@@ -90,8 +105,9 @@ function normalizeResultColor(rawColor: string): ResultColor {
 
 function parseRow($: ReturnType<typeof load>, row: ReturnType<typeof load.prototype.find>): SubmissionResult {
   const submissionId = row.find('td:first-child').text().trim();
-  const problemId = row.find('td a[href^="/problem/"]').text().trim();
-  const problemTitle = '';
+  const problemLink = row.find('td a[href^="/problem/"]').first();
+  const problemId = problemLink.text().trim();
+  const problemTitle = problemLink.attr('title')?.trim() ?? '';
   const resultSpan = row.find('span.result-text');
   const result = resultSpan.text().trim();
   const resultColor = normalizeResultColor(resultSpan.attr('data-color') ?? '');
@@ -136,6 +152,7 @@ function buildStatusUrl(userId: string, top: number | null, mode: SearchMode): s
 
 export async function POST(req: Request): Promise<Response> {
   const { userId, mode } = (await req.json()) as { userId: string; mode: SearchMode };
+  const startedAtMs = Date.now();
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -146,7 +163,7 @@ export async function POST(req: Request): Promise<Response> {
 
       try {
         // 최신 제출 ID 확인 (top 파라미터 없이)
-        const initHtml = await fetchBoj(buildStatusUrl(userId, null, mode));
+        const initHtml = await fetchBoj(buildStatusUrl(userId, null, mode), startedAtMs);
         const initParsed = parsePage(initHtml);
 
         if (initParsed.rowCount === 0 || !initParsed.firstSubmissionId) {
@@ -160,12 +177,12 @@ export async function POST(req: Request): Promise<Response> {
         let hi = latestId;
         let iteration = 0;
 
-        while (lo < hi) {
-          send({ type: 'progress', percent: Math.round((iteration / MAX_BINARY_SEARCH_ITERATIONS) * 100) });
+        while (lo < hi && iteration < MAX_BINARY_SEARCH_STEPS) {
+          send({ type: 'progress', percent: Math.round((iteration / MAX_BINARY_SEARCH_STEPS) * 100) });
           iteration++;
 
           const mid = Math.floor((lo + hi) / 2);
-          const html = await fetchBoj(buildStatusUrl(userId, mid, mode));
+          const html = await fetchBoj(buildStatusUrl(userId, mid, mode), startedAtMs);
           const { rowCount, lastRow, hasNonAc } = parsePage(html);
 
           if (rowCount === 0) {
@@ -184,9 +201,8 @@ export async function POST(req: Request): Promise<Response> {
               if (!lastRow) {
                 send({ type: 'empty' });
               } else {
-                const problemTitle = await fetchProblemTitle(lastRow.problemId);
                 trackSearch();
-                send({ type: 'result', ...lastRow, problemTitle });
+                send({ type: 'result', ...lastRow });
               }
               controller.close();
               return;
@@ -203,7 +219,7 @@ export async function POST(req: Request): Promise<Response> {
         }
 
         // 루프 종료: top=lo 페이지에서 최종 추출
-        const finalHtml = await fetchBoj(buildStatusUrl(userId, lo, mode));
+        const finalHtml = await fetchBoj(buildStatusUrl(userId, lo, mode), startedAtMs);
         const finalParsed = parsePage(finalHtml);
 
         send({ type: 'progress', percent: 100 });
@@ -217,9 +233,8 @@ export async function POST(req: Request): Promise<Response> {
                 send({ type: 'empty' });
                 break;
               }
-              const titleWrong = await fetchProblemTitle(finalParsed.lastNonAcRow.problemId);
               trackSearch();
-              send({ type: 'result', ...finalParsed.lastNonAcRow, problemTitle: titleWrong });
+              send({ type: 'result', ...finalParsed.lastNonAcRow });
               break;
             }
             case 'first':
@@ -229,15 +244,16 @@ export async function POST(req: Request): Promise<Response> {
                 send({ type: 'empty' });
                 break;
               }
-              const titleFirst = await fetchProblemTitle(finalParsed.lastRow.problemId);
               trackSearch();
-              send({ type: 'result', ...finalParsed.lastRow, problemTitle: titleFirst });
+              send({ type: 'result', ...finalParsed.lastRow });
             }
           }
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : '잠시 후 다시 시도해주세요';
-        send({ type: 'error', message: message.includes('BOJ') ? '잠시 후 다시 시도해주세요' : message });
+        const isAbortError = err instanceof DOMException && err.name === 'AbortError';
+        const isTimeoutError = isAbortError || message.includes('초과');
+        send({ type: 'error', message: isTimeoutError || message.includes('BOJ') ? '잠시 후 다시 시도해주세요' : message });
       }
 
       controller.close();
