@@ -1,0 +1,28 @@
+.badge {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.badge.ac {
+  color: var(--result-ac);
+}
+
+.badge.pe,
+.badge.tle,
+.badge.mle,
+.badge.ole {
+  color: var(--result-pe);
+}
+
+.badge.wa,
+.badge.re {
+  color: var(--result-wa);
+}
+
+.badge.rte {
+  color: var(--result-rte);
+}
+
+.badge.ce {
+  color: var(--result-ce);
+}

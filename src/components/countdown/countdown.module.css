@@ -1,0 +1,26 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 12px;
+  margin-bottom: 20px;
+  border-left: 3px var(--color-accent) solid;
+}
+
+.label {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.value {
+  font-size: 14px;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.valueMono {
+  font-size: 14px;
+  color: var(--color-text);
+  font-weight: 600;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}

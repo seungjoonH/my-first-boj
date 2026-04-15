@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 나의 첫 백준은?
 
-## Getting Started
+백준 아이디를 입력하면 **첫 제출 / 첫 정답 / 첫 오답** 을 바로 확인할 수 있는 서비스입니다.
 
-First, run the development server:
+<br />
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 서비스 사용법
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. 서비스 페이지에 접속해보세요.
+2. 상단 탭에서 확인하고 싶은 항목을 선택해보세요.
+   - `첫 제출`
+   - `첫 정답`
+   - `첫 오답`
+3. 입력창에 **백준 아이디를 입력하세요**.
+4. `찾아보기` 버튼을 클릭해보세요.
+5. 결과 카드에서 제출 번호, 문제 번호, 제출 시각, 언어, 결과를 확인해보세요.
+6. `제출 시각`을 클릭해서 상대 시간/절대 시간 표시를 바꿔보세요.
+7. 다시 조회하고 싶다면 `다시 찾아보기` 버튼을 눌러서 이어서 사용해보세요.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<br />
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 화면 튜토리얼
 
-## Learn More
+아래 순서대로 스크린샷을 넣고 따라해보세요.
 
-To learn more about Next.js, take a look at the following resources:
+### 1) 첫 화면
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+<img width="800" alt="01-home" src="https://github.com/user-attachments/assets/8e160e7b-c323-48ee-b129-438b6fd6706f" />
+<br />
+<br />
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 입력창 위치와 탭 위치를 먼저 확인해보세요.
 
-## Deploy on Vercel
+### 2) 아이디 입력
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+<img width="800" alt="02-input-id" src="https://github.com/user-attachments/assets/f923402b-e783-48bf-be79-827ebd0c785e" />
+<br />
+<br />
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `백준 아이디를 입력하세요` 입력창에 본인 아이디를 적어보세요.
+- `찾아보기` 버튼을 클릭해서 조회를 시작해보세요.
+
+### 3) 결과 확인
+
+<img width="800" alt="03-result-card" src="https://github.com/user-attachments/assets/e8ee87b2-efe6-4dba-922b-d76b9a92ee27" />
+<br />
+<br />
+
+- 결과 카드에서 제출 정보와 결과 상태를 확인해보세요.
+
+### 5) 다시 조회
+
+- `다시 찾아보기`를 눌러 다른 탭으로도 조회해보세요.

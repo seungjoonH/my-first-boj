@@ -1,0 +1,77 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+}
+
+.input:disabled {
+  background: #f4f4f4;
+  color: var(--color-muted);
+}
+
+.button {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--color-btn-bg);
+  color: var(--color-btn-text);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.button:disabled:not(.loading) {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+.button.loading {
+  cursor: not-allowed;
+}
+
+.messageText {
+  flex-shrink: 0;
+}
+
+.dots {
+  display: inline-block;
+  width: 1.5ch;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
