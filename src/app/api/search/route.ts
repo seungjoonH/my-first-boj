@@ -57,6 +57,7 @@ const DELAY_MIN_MS = 100;
 const DELAY_MAX_MS = 300;
 const PAGE_SIZE = 20;
 const MAX_BINARY_SEARCH_STEPS = 27;
+const BINARY_SEARCH_START_SUBMISSION_ID = 22_958;
 const REQUEST_DEADLINE_MS = 110_000;
 const SEARCH_RESULT_CACHE_TTL_SEC = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * DAYS_PER_YEAR * 2;
 const SEARCH_CHECKPOINT_TTL_SEC = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * 15;
@@ -254,7 +255,8 @@ type SearchBounds = {
 
 function resolveSearchBounds(latestId: number, checkpoint: SearchCheckpoint | null): SearchBounds {
   if (!checkpoint || checkpoint.latestId !== latestId) {
-    return { latestId, lo: 1, hi: latestId, iteration: 0 };
+    const lo = Math.min(BINARY_SEARCH_START_SUBMISSION_ID, latestId);
+    return { latestId, lo, hi: latestId, iteration: 0 };
   }
 
   const lo = Math.max(1, Math.min(checkpoint.lo, latestId));
