@@ -7,9 +7,9 @@ import styles from './inputArea.module.css';
 
 const DOT_INTERVAL_MS = 400;
 const PHASE_INTERVAL_MS = 500;
-const PHASE_MESSAGES = ['찾는 중', '조금만 더 기다려주세요', '거의 다 찾았어요', '완료!'] as const;
+const PHASE_MESSAGES = ['찾는 중', '오래 걸릴 수 있어요', '조금만 더 기다려주세요', '완료!'] as const;
 const PERCENT_THRESHOLDS = [40, 70] as const; // phase 0→1, 1→2
-const TIME_THRESHOLDS_MS = [60_000, 90_000] as const; // phase 0→1, 1→2
+const TIME_THRESHOLDS_MS = [20_000, 40_000] as const; // phase 0→1, 1→2
 
 function getTimeBasedPhase(elapsedMs: number): 0 | 1 | 2 {
   if (elapsedMs >= TIME_THRESHOLDS_MS[1]) return 2;

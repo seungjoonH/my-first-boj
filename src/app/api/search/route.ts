@@ -23,7 +23,7 @@ function trackSearch() {
   });
 }
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 export const dynamic = 'force-dynamic';
 
 function parseUserAgents(rawValue: string): string[] {
@@ -57,7 +57,7 @@ const DELAY_MIN_MS = 100;
 const DELAY_MAX_MS = 300;
 const PAGE_SIZE = 20;
 const MAX_BINARY_SEARCH_STEPS = 27;
-const REQUEST_DEADLINE_MS = 50_000;
+const REQUEST_DEADLINE_MS = 110_000;
 const SEARCH_RESULT_CACHE_TTL_SEC = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * DAYS_PER_YEAR * 2;
 const SEARCH_CHECKPOINT_TTL_SEC = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * 15;
 
@@ -196,6 +196,19 @@ async function saveCachedResult(userId: string, mode: SearchMode, result: Submis
   }
 }
 
+async function saveRelatedResultCaches(userId: string, mode: SearchMode, result: SubmissionResult): Promise<void> {
+  await saveCachedResult(userId, mode, result);
+  if (mode !== 'first') return;
+
+  switch (result.resultColor) {
+    case 'ac':
+      await saveCachedResult(userId, 'correct', result);
+      break;
+    default:
+      await saveCachedResult(userId, 'wrong', result);
+  }
+}
+
 async function loadCheckpoint(userId: string, mode: SearchMode): Promise<SearchCheckpoint | null> {
   if (!redis) return null;
 
@@ -323,7 +336,7 @@ export async function POST(req: Request): Promise<Response> {
       }
 
       async function sendResult(result: SubmissionResult): Promise<void> {
-        await saveCachedResult(searchUserId, mode, result);
+        await saveRelatedResultCaches(searchUserId, mode, result);
         await clearCheckpoint(searchUserId, mode);
         trackSearch();
         send({ type: 'result', ...result });
