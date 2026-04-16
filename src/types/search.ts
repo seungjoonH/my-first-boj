@@ -15,4 +15,5 @@ export type SseEvent =
   | { type: 'progress'; percent: number }
   | ({ type: 'result' } & SubmissionResult)
   | { type: 'empty' }
+  | { type: 'ended' }
   | { type: 'error'; message: string };

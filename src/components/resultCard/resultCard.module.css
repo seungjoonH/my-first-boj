@@ -53,6 +53,17 @@ a.value:hover {
   color: var(--color-muted);
 }
 
+.userLink {
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.userLink:hover {
+  color: var(--color-accent);
+}
+
 .dateToggle {
   font-size: 13px;
   color: var(--color-text);

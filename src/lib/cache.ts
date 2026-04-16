@@ -23,3 +23,13 @@ export function saveCache(userId: string, mode: SearchMode, result: SubmissionRe
     console.error('[cache] save failed', error);
   }
 }
+
+export function cleanInvalidCaches(regex: RegExp): void {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (!key.startsWith(KEY_PREFIX + ':')) continue;
+      const userId = key.split(':')[1];
+      if (userId && !regex.test(userId)) localStorage.removeItem(key);
+    }
+  } catch { /* ignore */ }
+}

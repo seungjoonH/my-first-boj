@@ -1,7 +1,7 @@
 import { load } from 'cheerio';
 import { Redis } from '@upstash/redis';
 import type { ResultColor, SearchMode, SubmissionResult, SseEvent } from '@/types/search';
-import { BOJ_BASE } from '@/lib/constants';
+import { BOJ_BASE, BOJ_ID_REGEX, SERVICE_END_MS } from '@/lib/constants';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0';
 const SECONDS_PER_MINUTE = 60;
@@ -315,6 +315,11 @@ function createSseResponse(events: SseEvent[]): Response {
 export async function POST(req: Request): Promise<Response> {
   const { userId, mode } = (await req.json()) as { userId: string; mode: SearchMode };
   const searchUserId = userId.trim();
+
+  if (!BOJ_ID_REGEX.test(searchUserId)) {
+    return createSseResponse([{ type: 'error', message: '아이디 형식이 맞지 않습니다' }]);
+  }
+
   const startedAtMs = Date.now();
 
   const cachedResult = await loadCachedResult(searchUserId, mode);
@@ -323,6 +328,10 @@ export async function POST(req: Request): Promise<Response> {
       { type: 'progress', percent: 100 },
       { type: 'result', ...cachedResult },
     ]);
+  }
+
+  if (Date.now() >= SERVICE_END_MS) {
+    return createSseResponse([{ type: 'ended' }]);
   }
 
   const encoder = new TextEncoder();

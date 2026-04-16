@@ -18,7 +18,7 @@ const DURATION_UNITS: { key: keyof ReturnType<typeof getDurationTotals>; label: 
   { key: 'seconds', label: '초',   particle: '를' },
 ];
 
-export function ResultCard({ result, mode }: ResultCardProps) {
+export function ResultCard({ result, mode, userId }: ResultCardProps) {
   const [showRelative, setShowRelative] = useState(true);
   const [now, setNow] = useState(() => Date.now());
 
@@ -127,7 +127,12 @@ export function ResultCard({ result, mode }: ResultCardProps) {
           </div>
           <div className={styles.togetherBlock}>
             <p className={styles.togetherMain}>
-              당신은 백준과{' '}
+              <a
+                className={styles.userLink}
+                href={`${BOJ_BASE}/user/${userId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >{userId}</a>님은 백준과{' '}
               <span className={styles.durationMain}>{relativeDisplay}</span>
               {relativeDisplay.endsWith('초') ? '를' : '을'}{' '}
               {togetherStatusText}

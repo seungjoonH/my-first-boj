@@ -70,7 +70,7 @@ export function InputArea({
         type="text"
         placeholder="백준 아이디를 입력하세요"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value.replace(/\s/g, ''))}
         onKeyDown={handleKeyDown}
         disabled={disabled}
         autoComplete="off"

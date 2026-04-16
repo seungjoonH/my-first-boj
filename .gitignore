@@ -44,3 +44,6 @@ docs/**/*
 
 AGENTS.md
 CLAUDE.md
+.acommit/
+
+docs/

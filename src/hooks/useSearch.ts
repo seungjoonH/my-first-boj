@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import type { SearchMode, SubmissionResult, SseEvent } from '@/types/search';
 import { loadCache, saveCache } from '@/lib/cache';
 
-type SearchState = 'idle' | 'loading' | 'result' | 'empty';
+type SearchState = 'idle' | 'loading' | 'result' | 'empty' | 'ended';
 const RESULT_TRANSITION_DELAY_MS = 1000;
 
 function saveDerivedCaches(userId: string, mode: SearchMode, submissionResult: SubmissionResult) {
@@ -99,6 +99,10 @@ export function useSearch(onError: (message: string) => void) {
 
               case 'empty':
                 setState('empty');
+                break;
+
+              case 'ended':
+                setState('ended');
                 break;
 
               case 'error':

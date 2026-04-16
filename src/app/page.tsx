@@ -12,14 +12,13 @@ import { Toast } from '@/components/toast/Toast';
 import { useSearch } from '@/hooks/useSearch';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { useToast } from '@/hooks/useToast';
-import { loadCache } from '@/lib/cache';
-import { SERVICE_END_MS } from '@/lib/constants';
+import { cleanInvalidCaches, loadCache } from '@/lib/cache';
+import { BOJ_ID_REGEX } from '@/lib/constants';
 import styles from './page.module.css';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<SearchMode>('first');
   const [userId, setUserId] = useState('');
-  const [serviceEnded, setServiceEnded] = useState(false);
 
   const { message: toastMessage, showToast } = useToast();
   const { isLimited, remainingSeconds, recordClick } = useRateLimit();
@@ -28,7 +27,6 @@ export default function HomePage() {
   const handleTabChange = useCallback(
     (mode: SearchMode) => {
       if (state !== 'idle') handleReset();
-      setServiceEnded(false);
       setActiveTab(mode);
     },
     [state, handleReset],
@@ -38,11 +36,13 @@ export default function HomePage() {
     const trimmed = userId.trim();
     if (!trimmed) return;
 
-    const hasCachedResult = loadCache(trimmed, activeTab) !== null;
-    if (!hasCachedResult && Date.now() >= SERVICE_END_MS) {
-      setServiceEnded(true);
+    if (!BOJ_ID_REGEX.test(trimmed)) {
+      cleanInvalidCaches(BOJ_ID_REGEX);
+      showToast('아이디 형식이 맞지 않습니다');
       return;
     }
+
+    const hasCachedResult = loadCache(trimmed, activeTab) !== null;
 
     if (!hasCachedResult && isLimited()) {
       showToast(`${remainingSeconds()}초 후에 다시 시도해주세요`);
@@ -56,50 +56,51 @@ export default function HomePage() {
   const handleResetWithUser = useCallback(() => {
     handleReset();
     setUserId('');
-    setServiceEnded(false);
   }, [handleReset]);
 
   const isResultState = state === 'result' && result !== null;
 
   let content: ReactNode;
 
-  if (serviceEnded) {
-    content = (
-      <div className={styles.empty}>
-        <p>더 이상 확인할 수 없습니다.</p>
-      </div>
-    );
-  } else {
-    switch (state) {
-      case 'idle':
-      case 'loading':
-        content = (
-          <InputArea
-            value={userId}
-            onChange={setUserId}
-            onSubmit={handleSubmit}
-            disabled={state === 'loading'}
-            isLoading={state === 'loading'}
-            progress={progress}
-          />
-        );
-        break;
-      case 'result':
-        content = isResultState ? <ResultCard result={result} mode={activeTab} /> : null;
-        break;
-      case 'empty':
-        content = (
-          <div className={styles.empty}>
-            <p>제출 내역이 없습니다</p>
-            <button className={styles.resetButton} onClick={handleResetWithUser}>
-              다시 찾아보기
-            </button>
-          </div>
-        );
-        break;
-      default:
-        content = null;
-    }
+  switch (state) {
+    case 'idle':
+    case 'loading':
+      content = (
+        <InputArea
+          value={userId}
+          onChange={setUserId}
+          onSubmit={handleSubmit}
+          disabled={state === 'loading'}
+          isLoading={state === 'loading'}
+          progress={progress}
+        />
+      );
+      break;
+    case 'result':
+      content = isResultState ? <ResultCard result={result} mode={activeTab} userId={userId.trim()} /> : null;
+      break;
+    case 'empty':
+      content = (
+        <div className={styles.empty}>
+          <p>제출 내역이 없습니다.</p>
+          <button className={styles.resetButton} onClick={handleResetWithUser}>
+            다시 찾아보기
+          </button>
+        </div>
+      );
+      break;
+    case 'ended':
+      content = (
+        <div className={styles.empty}>
+          <p>더 이상 확인할 수 없습니다.</p>
+          <button className={styles.resetButton} onClick={handleResetWithUser}>
+            다시 찾아보기
+          </button>
+        </div>
+      );
+      break;
+    default:
+      content = null;
   }
 
   return (
