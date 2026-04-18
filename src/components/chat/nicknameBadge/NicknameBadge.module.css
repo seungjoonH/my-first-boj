@@ -1,0 +1,84 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.separator {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  font-size: 10px;
+  font-weight: 400;
+  border: none;
+  line-height: 1.25;
+  white-space: nowrap;
+  background: transparent;
+}
+
+.badgeA {
+  color: var(--color-muted);
+}
+
+.badgeA--judging {
+  color: #d8833b;
+}
+
+.badgeA--time {
+  color: var(--color-accent);
+}
+
+.badgeAByte {
+  color: var(--result-wa);
+}
+
+.badgeB--ac {
+  color: var(--result-ac);
+  font-weight: 600;
+}
+
+.badgeB--wa {
+  color: var(--result-wa);
+}
+
+.badgeB--tle {
+  color: var(--result-tle);
+}
+
+.badgeB--ce {
+  color: var(--result-ce);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.badgeB--rte {
+  color: var(--result-rte);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.badgeB--muted {
+  color: var(--color-muted);
+}
+
+.adminRoot {
+  display: inline-flex;
+  align-items: center;
+}
+
+.adminBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  padding: 1px 5px;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}

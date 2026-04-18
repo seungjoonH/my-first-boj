@@ -10,7 +10,8 @@ export function loadCache(userId: string, mode: SearchMode): SubmissionResult | 
   try {
     const raw = localStorage.getItem(getCacheKey(userId, mode));
     return raw ? (JSON.parse(raw) as SubmissionResult) : null;
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[cache] load failed', error);
     return null;
   }
@@ -19,7 +20,8 @@ export function loadCache(userId: string, mode: SearchMode): SubmissionResult | 
 export function saveCache(userId: string, mode: SearchMode, result: SubmissionResult): void {
   try {
     localStorage.setItem(getCacheKey(userId, mode), JSON.stringify(result));
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[cache] save failed', error);
   }
 }
@@ -31,5 +33,8 @@ export function cleanInvalidCaches(regex: RegExp): void {
       const userId = key.split(':')[1];
       if (userId && !regex.test(userId)) localStorage.removeItem(key);
     }
-  } catch { /* ignore */ }
+  }
+  catch {
+    /* ignore */
+  }
 }

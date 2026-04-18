@@ -1,0 +1,451 @@
+/* transform 제거: 중첩 스크롤 시 네이티브 ::backdrop 합성 깨짐 완화 */
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: min(96vw, 520px);
+  height: fit-content;
+  max-height: min(90vh, 680px);
+  margin: auto;
+  padding: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg, #fff);
+  color: var(--color-text);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.inner {
+  padding: 16px 18px 18px;
+  max-height: min(85vh, 640px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.innerScrollLock {
+  overflow: hidden;
+}
+
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  min-height: 32px;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.subheading {
+  margin: 18px 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.subheading:first-of-type {
+  margin-top: 0;
+}
+
+.aExampleCell {
+  vertical-align: middle;
+  min-width: 0;
+}
+
+.aExampleRange {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.aExampleDots {
+  font-size: 9px;
+  color: var(--color-muted);
+  line-height: 1;
+}
+
+.aExampleSep {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.aLangPreview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.aLangPreviewList {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.aLangPreviewList span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aLangMoreButton {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.aLangMoreButton:hover {
+  color: var(--color-text);
+}
+
+/* dialog 직계 자식: 스크롤 영역(.inner) 밖에 두어 스크롤과 무관하게 전체를 덮음 */
+.langPanelBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.langPanel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  max-height: min(58vh, 440px);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+.langPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.langPanelTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.langPanelClose {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.langPanelClose:hover {
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.langPanelCloseIcon {
+  display: block;
+}
+
+.langPanelList {
+  margin: 0;
+  padding: 10px 12px 12px;
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-content: flex-start;
+}
+
+.langPanelItem {
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.03);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.langPanelItemHighlight {
+  background: rgba(61, 125, 228, 0.12);
+  border-color: rgba(61, 125, 228, 0.4);
+  color: #1a56c4;
+  font-weight: 600;
+}
+
+.lede {
+  margin: 0 0 8px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+
+.tableWrap {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.probTable {
+  table-layout: fixed;
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.probTableA .colCompact {
+  width: 40px;
+}
+
+.probTableA .colCompactNum {
+  width: 62px;
+}
+
+.probTableB .colPct {
+  width: 40px;
+}
+
+.probTable th,
+.probTable td {
+  border: 1px solid var(--color-border);
+  padding: 5px 7px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.probTable thead th {
+  background: rgba(0, 0, 0, 0.03);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.probTable tbody th[scope='row'] {
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+/* 아이콘 열 — `.probTable td { text-align: left }` 보다 구체성 높여 헤더·셀 모두 가운데 */
+.probTable thead th.colTierIcon,
+.probTable tbody th.colTierIcon,
+.probTable td.colTierIcon {
+  width: 34px;
+  min-width: 34px;
+  box-sizing: border-box;
+  padding: 5px 4px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.probTable thead .colTierIcon {
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1.15;
+  padding: 5px 4px;
+}
+
+.colAExample {
+  min-width: 0;
+}
+
+.colCompact,
+.colCompactNum {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.colCompactNum {
+  text-align: right;
+}
+
+.ratioCell {
+  text-align: right;
+}
+
+.colBResult {
+  min-width: 0;
+}
+
+.colPct {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tierIconCell {
+  line-height: 0;
+}
+
+.tierIconCell img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.pctCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bBadgeDemoCell {
+  vertical-align: middle;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bBadgeDemoCell > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.probTable td:last-child,
+.probTable thead th:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.note {
+  margin: 8px 0 0;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+
+.closeButton {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeIcon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.closeButton:hover {
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.myNicknameSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  border: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.myNicknameLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cooldownLabel {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.highlightRow {
+  background: rgba(61, 125, 228, 0.08);
+}
+
+.highlightRow td,
+.highlightRow th {
+  border-color: rgba(61, 125, 228, 0.25);
+}
+
+.finalTierRules {
+  margin: 0 0 10px;
+  padding-left: 1.25em;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.finalTierRules li {
+  margin-bottom: 2px;
+}
+
+.finalTierRules li:last-child {
+  margin-bottom: 0;
+}
+
+.finalTierExampleLabel {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.finalTierTable thead th {
+  font-size: 10px;
+}
+
+.finalTierCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}

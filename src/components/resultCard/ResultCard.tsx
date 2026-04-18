@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { formatAbsolute, formatRelative, getDurationTotals } from '@/lib/formatDate';
 import { ResultBadge } from '@/components/resultBadge/ResultBadge';
 import { BOJ_BASE, SERVICE_END_MS } from '@/lib/constants';
 import type { ResultCardProps } from './type';
 import styles from './resultCard.module.css';
 
-const CLOCK_INTERVAL_MS = 500;
-
+const LIVE_INTERVAL_MS = 500;
 const DURATION_UNITS: { key: keyof ReturnType<typeof getDurationTotals>; label: string; particle: '을' | '를' }[] = [
   { key: 'years',   label: '년',   particle: '을' },
   { key: 'months',  label: '개월', particle: '을' },
@@ -18,25 +17,31 @@ const DURATION_UNITS: { key: keyof ReturnType<typeof getDurationTotals>; label: 
   { key: 'seconds', label: '초',   particle: '를' },
 ];
 
-export function ResultCard({ result, mode, userId }: ResultCardProps) {
-  const [showRelative, setShowRelative] = useState(true);
+function SubmittedAtLiveText({ submittedAt, showRelative }: { submittedAt: string; showRelative: boolean }) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), CLOCK_INTERVAL_MS);
-    return () => clearInterval(id);
+    const id = window.setInterval(() => {
+      setNow(Date.now());
+    }, LIVE_INTERVAL_MS);
+    return () => window.clearInterval(id);
   }, []);
 
-  const { submissionId, problemId, submittedAt, language, result: resultText, resultColor } = result;
+  const liveDateRelative = formatRelative(submittedAt, now);
+  return showRelative ? `${liveDateRelative} 전` : formatAbsolute(submittedAt);
+}
 
-  const currentNow = now;
-  const effectiveNow = currentNow >= SERVICE_END_MS ? SERVICE_END_MS : currentNow;
+function FirstModeLiveSection({ submittedAt, userId }: { submittedAt: string; userId: string }) {
+  const [now, setNow] = useState(() => Date.now());
 
-  // 제출 시각 토글: 현재 시각 기준 (계속 갱신)
-  const liveDateRelative = formatRelative(submittedAt, currentNow);
-  const dateDisplay = showRelative ? `${liveDateRelative} 전` : formatAbsolute(submittedAt);
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setNow(Date.now());
+    }, LIVE_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, []);
 
-  // 함께했습니다 블록: 서비스 종료일 기준으로 고정
+  const effectiveNow = now >= SERVICE_END_MS ? SERVICE_END_MS : now;
   const relativeDisplay = formatRelative(submittedAt, effectiveNow);
   const totals = getDurationTotals(submittedAt, effectiveNow);
 
@@ -45,8 +50,8 @@ export function ResultCard({ result, mode, userId }: ResultCardProps) {
   const elapsed = Math.max(0, effectiveNow - submittedAtMs);
   const journeyPercent = Math.min(100, (elapsed / totalDuration) * 100);
   const journeyPercentText = journeyPercent === 100 ? '100%' : `${journeyPercent.toFixed(6)}%`;
-  const journeyFillStyle = { '--journey-percent': `${journeyPercent}%` } as React.CSSProperties;
-  const isBeforeServiceEnd = currentNow < SERVICE_END_MS;
+  const journeyFillStyle = { '--journey-percent': `${journeyPercent}%` } as CSSProperties;
+  const isBeforeServiceEnd = now < SERVICE_END_MS;
   const togetherStatusText = isBeforeServiceEnd ? '함께하고 있습니다.' : '함께 했습니다.';
   const startLabel = submittedAt.split(' ')[0].replace(/-/g, '.');
   const endLabel = new Date(SERVICE_END_MS).toLocaleDateString('ko-KR', {
@@ -55,6 +60,55 @@ export function ResultCard({ result, mode, userId }: ResultCardProps) {
     month: '2-digit',
     day: '2-digit',
   }).replace(/\. /g, '.').replace(/\.$/, '');
+
+  return (
+    <>
+      <div className={styles.journeyBlock}>
+        <div className={styles.journeyLabels}>
+          <span className={styles.journeyStart}>{startLabel}</span>
+          <span className={styles.journeyPercent}>
+            {journeyPercentText}
+          </span>
+          <span className={styles.journeyEnd}>{endLabel}</span>
+        </div>
+        <div className={styles.journeyBar}>
+          <div className={styles.journeyFill} style={journeyFillStyle} />
+        </div>
+      </div>
+      <div className={styles.togetherBlock}>
+        <p className={styles.togetherMain}>
+          <a
+            className={styles.userLink}
+            href={`${BOJ_BASE}/user/${userId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >{userId}</a>님은 백준과{' '}
+          <span className={styles.durationMain}>{relativeDisplay}</span>
+          {relativeDisplay.endsWith('초') ? '를' : '을'}{' '}
+          {togetherStatusText}
+        </p>
+        <div className={styles.durationList}>
+          {DURATION_UNITS.filter(({ key }) => totals[key] > 0).map(({ key, label, particle }) => (
+            <p key={key} className={styles.durationItem}>
+              <span className={styles.durationNum}>{totals[key].toLocaleString()}</span>
+              {label}{particle}{' '}
+              {togetherStatusText}
+            </p>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+export const ResultCard = memo(function ResultCard({ result, mode, userId }: ResultCardProps) {
+  const [showRelative, setShowRelative] = useState(true);
+
+  const { submissionId, problemId, submittedAt, language, result: resultText, resultColor } = result;
+  const resultBadgeNode = useMemo(
+    () => <ResultBadge result={resultText} resultColor={resultColor} />,
+    [resultText, resultColor],
+  );
 
   function handleToggleDate() {
     setShowRelative((prev) => !prev);
@@ -97,7 +151,7 @@ export function ResultCard({ result, mode, userId }: ResultCardProps) {
             onClick={handleToggleDate}
             title={showRelative ? '절대 날짜로 보기' : '상대 날짜로 보기'}
           >
-            {dateDisplay}
+            <SubmittedAtLiveText submittedAt={submittedAt} showRelative={showRelative} />
           </button>
         </div>
         <div className={styles.row}>
@@ -107,48 +161,23 @@ export function ResultCard({ result, mode, userId }: ResultCardProps) {
         <div className={styles.row}>
           <span className={styles.label}>결과</span>
           <span className={styles.value}>
-            <ResultBadge result={resultText} resultColor={resultColor} />
+            {resultBadgeNode}
           </span>
         </div>
       </div>
-      {mode === 'first' && (
-        <>
-          <div className={styles.journeyBlock}>
-            <div className={styles.journeyLabels}>
-              <span className={styles.journeyStart}>{startLabel}</span>
-              <span className={styles.journeyPercent}>
-                {journeyPercentText}
-              </span>
-              <span className={styles.journeyEnd}>{endLabel}</span>
-            </div>
-            <div className={styles.journeyBar}>
-              <div className={styles.journeyFill} style={journeyFillStyle} />
-            </div>
-          </div>
-          <div className={styles.togetherBlock}>
-            <p className={styles.togetherMain}>
-              <a
-                className={styles.userLink}
-                href={`${BOJ_BASE}/user/${userId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >{userId}</a>님은 백준과{' '}
-              <span className={styles.durationMain}>{relativeDisplay}</span>
-              {relativeDisplay.endsWith('초') ? '를' : '을'}{' '}
-              {togetherStatusText}
-            </p>
-            <div className={styles.durationList}>
-              {DURATION_UNITS.filter(({ key }) => totals[key] > 0).map(({ key, label, particle }) => (
-                <p key={key} className={styles.durationItem}>
-                  <span className={styles.durationNum}>{totals[key].toLocaleString()}</span>
-                  {label}{particle}{' '}
-                  {togetherStatusText}
-                </p>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+      {mode === 'first' && <FirstModeLiveSection submittedAt={submittedAt} userId={userId} />}
     </div>
   );
-}
+}, (prev, next) => {
+  if (prev.mode !== next.mode) return false;
+  if (prev.userId !== next.userId) return false;
+  return (
+    prev.result.submissionId === next.result.submissionId &&
+    prev.result.problemId === next.result.problemId &&
+    prev.result.problemTitle === next.result.problemTitle &&
+    prev.result.submittedAt === next.result.submittedAt &&
+    prev.result.language === next.result.language &&
+    prev.result.result === next.result.result &&
+    prev.result.resultColor === next.result.resultColor
+  );
+});

@@ -67,11 +67,8 @@ export function useSearch(onError: (message: string) => void) {
             if (!raw) continue;
 
             let event: SseEvent;
-            try {
-              event = JSON.parse(raw) as SseEvent;
-            } catch {
-              continue;
-            }
+            try { event = JSON.parse(raw) as SseEvent; }
+            catch { continue; }
 
             switch (event.type) {
               case 'progress':
@@ -112,7 +109,8 @@ export function useSearch(onError: (message: string) => void) {
             }
           }
         }
-      } catch {
+      }
+      catch {
         onError('잠시 후 다시 시도해주세요');
         setState('idle');
       }

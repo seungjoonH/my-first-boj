@@ -47,3 +47,8 @@ CLAUDE.md
 .acommit/
 
 docs/
+
+# admin CLI (로컬 전용)
+scripts/
+
+.claude/

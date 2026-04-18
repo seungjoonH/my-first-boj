@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { SearchMode } from '@/types/search';
 import { buildCls } from '@/lib/buildCls';
 import type { TabsProps } from './type';
@@ -9,7 +10,7 @@ const TABS: { mode: SearchMode; label: string }[] = [
   { mode: 'wrong', label: '첫 오답' },
 ];
 
-export function Tabs({ active, onChange }: TabsProps) {
+export const Tabs = memo(function Tabs({ active, onChange }: TabsProps) {
   return (
     <div className={styles.root}>
       {TABS.map(({ mode, label }) => {
@@ -29,4 +30,4 @@ export function Tabs({ active, onChange }: TabsProps) {
       })}
     </div>
   );
-}
+});

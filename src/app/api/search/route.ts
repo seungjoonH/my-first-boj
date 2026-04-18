@@ -33,7 +33,8 @@ function parseUserAgents(rawValue: string): string[] {
     const parsed = JSON.parse(rawValue);
     if (!Array.isArray(parsed)) return [];
     return parsed.filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[headers] invalid BOJ_USER_AGENTS format', error);
     return [];
   }
@@ -177,7 +178,8 @@ async function loadCachedResult(userId: string, mode: SearchMode): Promise<Submi
   try {
     const raw = await redis.get(getResultCacheKey(userId, mode));
     return parseRedisJsonValue<SubmissionResult>(raw);
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[cache] failed to load result cache', error);
     return null;
   }
@@ -192,7 +194,8 @@ async function saveCachedResult(userId: string, mode: SearchMode, result: Submis
       JSON.stringify(result),
       { ex: SEARCH_RESULT_CACHE_TTL_SEC },
     );
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[cache] failed to save result cache', error);
   }
 }
@@ -216,7 +219,8 @@ async function loadCheckpoint(userId: string, mode: SearchMode): Promise<SearchC
   try {
     const raw = await redis.get(getCheckpointKey(userId, mode));
     return parseRedisJsonValue<SearchCheckpoint>(raw);
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[cache] failed to load search checkpoint', error);
     return null;
   }
@@ -231,7 +235,8 @@ async function saveCheckpoint(userId: string, mode: SearchMode, checkpoint: Sear
       JSON.stringify(checkpoint),
       { ex: SEARCH_CHECKPOINT_TTL_SEC },
     );
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[cache] failed to save search checkpoint', error);
   }
 }
@@ -241,7 +246,8 @@ async function clearCheckpoint(userId: string, mode: SearchMode): Promise<void> 
 
   try {
     await redis.del(getCheckpointKey(userId, mode));
-  } catch (error) {
+  }
+  catch (error) {
     console.error('[cache] failed to clear search checkpoint', error);
   }
 }
@@ -398,7 +404,8 @@ export async function POST(req: Request): Promise<Response> {
             case 'correct':
               if (!lastRow) {
                 await clearAndSendEmpty();
-              } else {
+              }
+              else {
                 await sendResult(lastRow);
               }
               controller.close();
@@ -427,10 +434,12 @@ export async function POST(req: Request): Promise<Response> {
         const finalResult = selectFinalResult(mode, finalParsed);
         if (!finalResult) {
           await clearAndSendEmpty();
-        } else {
+        }
+        else {
           await sendResult(finalResult);
         }
-      } catch (err) {
+      }
+      catch (err) {
         const message = err instanceof Error ? err.message : '잠시 후 다시 시도해주세요';
         const isAbortError = err instanceof DOMException && err.name === 'AbortError';
         const isTimeoutError = isAbortError || message.includes('초과');

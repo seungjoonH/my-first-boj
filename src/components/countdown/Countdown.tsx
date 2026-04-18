@@ -1,17 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { formatDurationMs } from '@/lib/formatDate';
 import { SERVICE_END_MS } from '@/lib/constants';
 import styles from './countdown.module.css';
 
 const COUNTDOWN_INTERVAL_MS = 500;
 
-export function Countdown() {
+export const Countdown = memo(function Countdown() {
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
-    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), COUNTDOWN_INTERVAL_MS);
     return () => clearInterval(id);
   }, []);
@@ -28,4 +27,4 @@ export function Countdown() {
       )}
     </div>
   );
-}
+});

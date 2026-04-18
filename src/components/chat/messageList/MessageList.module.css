@@ -1,0 +1,281 @@
+.root {
+  flex: 1;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.root::-webkit-scrollbar {
+  display: none;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dateMarker {
+  align-self: center;
+  margin: 6px 0 2px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.row--mine {
+  align-items: flex-end;
+}
+
+.row--theirs {
+  align-items: flex-start;
+}
+
+.row--admin {
+  align-items: flex-start;
+}
+
+.row--newSender {
+  padding-top: 10px;
+}
+
+.nickname {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.bubble {
+  max-width: 80%;
+  padding: 7px 11px;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid var(--color-border);
+  word-break: break-word;
+  white-space: pre-wrap;
+  position: relative;
+}
+
+.bubbleLine {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.bubbleLine--mine {
+  flex-direction: row-reverse;
+}
+
+.bubbleLine--theirs {
+  flex-direction: row;
+}
+
+.time {
+  font-size: 10px;
+  line-height: 1;
+  color: var(--color-muted);
+  white-space: nowrap;
+  padding-bottom: 2px;
+  user-select: none;
+}
+
+.time--mine,
+.time--theirs {
+  opacity: 0.9;
+}
+
+.bubble--mine {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.bubble--theirs {
+  background: #f1f1f1;
+  color: var(--color-text);
+}
+
+.bubble--admin {
+  background: #fff8e1;
+  color: var(--color-text);
+  border-color: #c79200;
+}
+
+.bubble--admin .keyword {
+  color: var(--color-accent);
+}
+
+.bubble--admin .keyword.keyword--active {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bubble--banned {
+  background: transparent !important;
+  border-color: var(--color-border) !important;
+}
+
+.bubble--dm {
+  border-color: #ef4444;
+}
+
+.bubble--shake {
+  animation: bubbleShakeX 480ms ease-in-out;
+}
+
+.bubble--dm:hover .dmTooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.bannedText {
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+.dmTag {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.dmTooltip {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  margin-top: 6px;
+  transform: translate(-50%, 2px);
+  background: rgba(25, 25, 25, 0.94);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 4px 7px;
+  border-radius: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 130ms ease, transform 130ms ease;
+  z-index: 3;
+}
+
+.dmHint {
+  font-size: 11px;
+  line-height: 1.25;
+  color: #8a8a8a;
+  margin-top: -2px;
+}
+
+.keyword {
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 120ms ease, text-decoration-color 120ms ease, filter 120ms ease;
+}
+
+.keyword--active {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  filter: saturate(1.2) contrast(1.12);
+}
+
+.bubble--mine .keyword {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bubble--theirs .keyword {
+  color: var(--color-accent);
+}
+
+.tooltip {
+  position: fixed;
+  left: var(--tooltip-x, 0px);
+  top: var(--tooltip-y, 0px);
+  transform: translate(-50%, -100%);
+  background: rgba(250, 250, 250, 0.96);
+  color: var(--color-text);
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 5px 8px;
+  white-space: nowrap;
+  border: 1px solid var(--color-border);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.tooltipABadge {
+  color: var(--color-muted);
+}
+
+.tooltipSeparator {
+  color: var(--color-muted);
+  margin: 0 4px;
+}
+
+.tooltipBBadge {
+  font-weight: 600;
+}
+
+.tooltipBBadge--ac {
+  color: var(--result-ac);
+}
+
+.tooltipBBadge--wa {
+  color: var(--result-wa);
+}
+
+.tooltipBBadge--tle {
+  color: var(--result-tle);
+}
+
+.tooltipBBadge--ce {
+  color: var(--result-ce);
+}
+
+.tooltipBBadge--rte {
+  color: var(--result-rte);
+}
+
+.tooltipBBadge--muted {
+  color: var(--color-muted);
+}
+
+.newMsgBanner {
+  position: sticky;
+  bottom: 8px;
+  align-self: center;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  padding: 4px 12px;
+  cursor: pointer;
+  border: none;
+  z-index: 10;
+}
+
+@keyframes bubbleShakeX {
+  0% {
+    transform: translateX(0);
+  }
+  18% {
+    transform: translateX(-7px);
+  }
+  36% {
+    transform: translateX(7px);
+  }
+  54% {
+    transform: translateX(-5px);
+  }
+  72% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}

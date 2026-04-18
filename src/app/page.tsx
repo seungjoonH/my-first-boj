@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { SearchMode } from '@/types/search';
 import { Header } from '@/components/header/Header';
@@ -16,20 +16,80 @@ import { cleanInvalidCaches, loadCache } from '@/lib/cache';
 import { BOJ_ID_REGEX } from '@/lib/constants';
 import styles from './page.module.css';
 
+const CACHE_KEY_PREFIX = 'boj-first:';
+const SEARCH_MODES: SearchMode[] = ['first', 'correct', 'wrong'];
+
+function isSearchMode(value: string): value is SearchMode {
+  return SEARCH_MODES.includes(value as SearchMode);
+}
+
+function findCachedUserIdForMode(mode: SearchMode): string {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (!key.startsWith(CACHE_KEY_PREFIX)) continue;
+      const [, userId, keyMode] = key.split(':');
+      if (!userId || !keyMode || !isSearchMode(keyMode)) continue;
+      if (keyMode !== mode) continue;
+      if (!BOJ_ID_REGEX.test(userId)) continue;
+      if (loadCache(userId, mode) === null) continue;
+      return userId;
+    }
+  }
+  catch {
+    return '';
+  }
+  return '';
+}
+
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<SearchMode>('first');
   const [userId, setUserId] = useState('');
+  const [isInputVisible, setIsInputVisible] = useState(true);
+  const restoredRef = useRef(false);
+  const userIdRef = useRef('');
 
   const { message: toastMessage, showToast } = useToast();
   const { isLimited, remainingSeconds, recordClick } = useRateLimit();
   const { state, progress, result, handleSearch, handleReset } = useSearch(showToast);
 
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
+
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const savedUserId = findCachedUserIdForMode(activeTab);
+    if (!savedUserId) return;
+    setUserId(savedUserId);
+    setIsInputVisible(false);
+    void handleSearch(savedUserId, activeTab);
+  }, [activeTab, handleSearch]);
+
+  useEffect(() => {
+    if (state !== 'result') return;
+    setIsInputVisible(false);
+  }, [state]);
+
+  useEffect(() => {
+    if (state !== 'idle') return;
+    if (!isInputVisible) setIsInputVisible(true);
+  }, [state, isInputVisible]);
+
   const handleTabChange = useCallback(
     (mode: SearchMode) => {
-      if (state !== 'idle') handleReset();
       setActiveTab(mode);
+      const trimmed = userIdRef.current.trim();
+      if (!trimmed || loadCache(trimmed, mode) === null) {
+        handleReset();
+        setIsInputVisible(true);
+        return;
+      }
+      setUserId(trimmed);
+      setIsInputVisible(false);
+      void handleSearch(trimmed, mode);
     },
-    [state, handleReset],
+    [handleSearch, handleReset],
   );
 
   const handleSubmit = useCallback(() => {
@@ -50,12 +110,12 @@ export default function HomePage() {
     }
 
     if (!hasCachedResult) recordClick();
-    handleSearch(trimmed, activeTab);
+    void handleSearch(trimmed, activeTab);
   }, [userId, activeTab, isLimited, remainingSeconds, recordClick, handleSearch, showToast]);
 
   const handleResetWithUser = useCallback(() => {
     handleReset();
-    setUserId('');
+    setIsInputVisible(true);
   }, [handleReset]);
 
   const isResultState = state === 'result' && result !== null;
@@ -65,7 +125,7 @@ export default function HomePage() {
   switch (state) {
     case 'idle':
     case 'loading':
-      content = (
+      content = isInputVisible ? (
         <InputArea
           value={userId}
           onChange={setUserId}
@@ -74,7 +134,7 @@ export default function HomePage() {
           isLoading={state === 'loading'}
           progress={progress}
         />
-      );
+      ) : null;
       break;
     case 'result':
       content = isResultState ? <ResultCard result={result} mode={activeTab} userId={userId.trim()} /> : null;

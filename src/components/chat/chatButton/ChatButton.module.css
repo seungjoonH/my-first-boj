@@ -1,0 +1,45 @@
+.root {
+  position: fixed;
+  bottom: 40px;
+  right: 50px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 44px;
+  max-width: calc(100vw - 100px);
+  box-sizing: border-box;
+  background: var(--color-btn-bg);
+  color: var(--color-btn-text);
+  border: none;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.root:hover {
+  opacity: 0.85;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  filter: invert(1);
+}
+
+.count {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) {
+  .root {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 32px);
+  }
+}

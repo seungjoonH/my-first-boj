@@ -75,6 +75,7 @@ a.value:hover {
   text-decoration-style: dashed;
   text-underline-offset: 2px;
   font-family: inherit;
+  white-space: nowrap;
 }
 
 .dateToggle:hover {

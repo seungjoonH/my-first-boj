@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/react';
 import { VersionBadge } from '@/components/versionBadge/VersionBadge';
+import { ChatRoot } from '@/components/chat/ChatRoot';
 import './globals.css';
 
 const DEFAULT_SITE_URL = 'https://my-first-boj.vercel.app';
@@ -67,6 +68,7 @@ export default function RootLayout({
       <body>
         {children}
         <VersionBadge />
+        <ChatRoot />
         <Analytics />
       </body>
     </html>

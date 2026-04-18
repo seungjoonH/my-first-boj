@@ -132,9 +132,11 @@ function calcDiff(raw: string, now: number): DurationTotals {
 }
 
 export function formatRelative(raw: string, now: number = Date.now()): string {
-  const { years, months, days, hours, minutes, seconds } = calcCalendarDiff(raw, now);
+  const startMs = parseKstDate(raw).getTime();
+  const diffMs = Math.max(0, now - startMs);
+  if (diffMs < 1000) return '방금';
 
-  if (seconds < 1) return '방금';
+  const { years, months, days, hours, minutes, seconds } = calcCalendarDiff(raw, now);
 
   const parts: string[] = [];
   if (years > 0) parts.push(`${years}년`);

@@ -1,0 +1,87 @@
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  box-sizing: border-box;
+  width: min(92vw, 360px);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg, #fff);
+  color: var(--color-text);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  z-index: 1;
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.inner {
+  padding: 16px 18px 18px;
+  box-sizing: border-box;
+}
+
+.title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--color-text);
+}
+
+.p:last-of-type {
+  margin-bottom: 14px;
+}
+
+.strong {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pMuted {
+  color: var(--color-muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btnSecondary,
+.btnPrimary {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.btnSecondary {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+}
+
+.btnSecondary:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.btnPrimary {
+  border: 1px solid var(--color-text);
+  background: var(--color-text);
+  color: var(--color-bg, #fff);
+}
+
+.btnPrimary:hover {
+  opacity: 0.92;
+}
