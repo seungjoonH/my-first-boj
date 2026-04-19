@@ -5,4 +5,5 @@ export interface InputAreaProps {
   disabled: boolean;
   isLoading?: boolean;
   progress?: number;
+  savedProgress?: number;
 }

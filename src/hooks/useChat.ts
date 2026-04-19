@@ -52,13 +52,12 @@ const INITIAL_STATE: ChatState = {
   nickCooldownTtlSec: NICK_RL_TTL_SEC,
 };
 
-/** 닉 쿨다운 문구가 초 단위로 자연스럽게 줄어들도록 UI만 주기 갱신 */
 const NICK_COOLDOWN_UI_TICK_MS = 500;
-
 const INACTIVITY_CHECK_INTERVAL_MS = 10_000;
 type SendMessageResponse = { ok: boolean; error?: string; keywordsAdded?: string[] };
 
-// ── sessionStorage 이중 연막 관리 ──────────────────────────────────────────────
+let chatMessageCountBootstrapRequested = false;
+
 type ChatSession = {
   b: string; // companion UUID (쿠키 UUID와 다른 세션 전용 값)
   a: string; // 쿠키 UUID 백업
@@ -191,6 +190,31 @@ export function useChat(isOpen: boolean, onClose: () => void) {
       ? 0
       : Math.max(0, Math.ceil((nickCooldownEndsAt - Date.now()) / 1000));
 
+  // ── 최초 진입 시 1회: 플로팅 버튼 숫자만 서버와 동기화 (채팅창을 열기 전에도 표시) ──
+  useEffect(() => {
+    if (chatMessageCountBootstrapRequested) return;
+    chatMessageCountBootstrapRequested = true;
+    const session = getOrInitSession();
+    void (async (): Promise<void> => {
+      try {
+        const res = await fetch('/api/chat/count', { headers: buildInitHeaders(session) });
+        if (!res.ok) return;
+        const data = (await res.json()) as { messageCount?: unknown };
+        if (typeof data.messageCount !== 'number' || !Number.isFinite(data.messageCount)) return;
+        const next = Math.min(
+          CHAT_MESSAGES_REDIS_MAX,
+          Math.max(0, Math.floor(data.messageCount)),
+        );
+        setState((prev) => {
+          if (prev.isLoaded) return prev;
+          return { ...prev, messageCount: next };
+        });
+      } catch {
+        // 네트워크 오류 등 — 무시
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     if (!isOpen) {
       setNickCooldownEndsAt(null);
@@ -226,45 +250,6 @@ export function useChat(isOpen: boolean, onClose: () => void) {
       return { ...prev, keywords: [...prev.keywords, keywordId] };
     });
   };
-
-  // ── 버튼 카운트 초기 동기화 (최초 1회) ─────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-
-    const syncButtonCount = async (): Promise<void> => {
-      try {
-        const session = getOrInitSession();
-        const res = await fetch('/api/chat/init', { headers: buildInitHeaders(session) });
-        if (!res.ok) return;
-        const init = (await res.json()) as ChatInitResponse;
-        if (cancelled) return;
-        writeChatSession({ b: init.companion || session.b, a: init.myUuid });
-        writeChatLocal({ u: init.myUuid, p: init.proof });
-        myUuidRef.current = init.myUuid;
-        myProofRef.current = init.proof;
-        setState((prev) => {
-          const uuid = prev.myUuid || init.myUuid;
-          return {
-            ...prev,
-            messageCount: init.messageCount,
-            mentionCount: init.mentionCount,
-            myUuid: uuid,
-            nickCooldownTtlSec: init.nickCooldownTtlSec ?? NICK_RL_TTL_SEC,
-            // 채팅 열기 전부터 내 닉네임을 올바르게 표시하기 위해 salt 미리 적재
-            saltMap: { ...prev.saltMap, [uuid]: init.saltMap[uuid] ?? '' },
-          };
-        });
-      } catch {
-        // silent
-      }
-    };
-
-    void syncButtonCount();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // ── SSE 연결 (끊기면 since/lastKwIdx 기준으로 자동 재연결) ─────────────────────
   useEffect(() => {
@@ -491,9 +476,8 @@ export function useChat(isOpen: boolean, onClose: () => void) {
     return () => clearInterval(id);
   }, [isOpen, onClose]);
 
-  // ── 주기 storage self-heal + cookie 재발급 ────────────────────────────────────
+  // ── 주기 storage self-heal (API 없음) ────────────────────────────────────────
   useEffect(() => {
-    // localStorage / sessionStorage self-heal: 10초마다
     const localHealId = window.setInterval(() => {
       const uuid = myUuidRef.current;
       const proof = myProofRef.current;
@@ -507,7 +491,15 @@ export function useChat(isOpen: boolean, onClose: () => void) {
       }
     }, HEAL_LOCAL_INTERVAL_MS);
 
-    // cookie 재발급 heal: 60초마다 (visible 탭, 쿨다운 적용)
+    return () => {
+      window.clearInterval(localHealId);
+    };
+  }, []);
+
+  // ── cookie 재발급 heal: 채팅창이 열려 있을 때만 (닫혀 있으면 init 요청 안 함)
+  useEffect(() => {
+    if (!isOpen) return;
+
     const cookieHealId = window.setInterval(() => {
       if (document.hidden) return;
       if (!myUuidRef.current) return;
@@ -522,10 +514,9 @@ export function useChat(isOpen: boolean, onClose: () => void) {
     }, HEAL_COOKIE_INTERVAL_MS);
 
     return () => {
-      window.clearInterval(localHealId);
       window.clearInterval(cookieHealId);
     };
-  }, []);
+  }, [isOpen]);
 
   // ── 메시지 전송 ───────────────────────────────────────────────────────────────
   const sendMessage = async (text: string): Promise<void> => {

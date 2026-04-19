@@ -26,6 +26,15 @@ export function saveCache(userId: string, mode: SearchMode, result: SubmissionRe
   }
 }
 
+export function clearCache(userId: string, mode: SearchMode): void {
+  try {
+    localStorage.removeItem(getCacheKey(userId, mode));
+  }
+  catch {
+    /* ignore */
+  }
+}
+
 export function cleanInvalidCaches(regex: RegExp): void {
   try {
     for (const key of Object.keys(localStorage)) {

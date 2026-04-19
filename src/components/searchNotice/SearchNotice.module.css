@@ -1,0 +1,312 @@
+/* 헤더 아래 화면 전체 너비 띠 */
+.strip {
+  width: 100%;
+  background: #fffbeb;
+  border-bottom: 1px solid #e9c04a;
+  color: var(--color-text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 20px;
+  box-sizing: border-box;
+}
+
+.bannerIcon {
+  flex-shrink: 0;
+  color: #b45309;
+}
+
+.bannerBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.bannerSummary {
+  margin: 0;
+  color: #78350f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.moreButton {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.moreButton:hover {
+  color: #92400e;
+}
+
+.dialog:not([open]) {
+  display: none !important;
+}
+
+.dialog[open] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  box-sizing: border-box;
+  width: min(94vw, 520px);
+  max-height: min(78dvh, 760px);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg, #fff);
+  color: var(--color-text);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.shell {
+  display: block;
+  box-sizing: border-box;
+}
+
+.inner {
+  padding: 0 18px 18px;
+  box-sizing: border-box;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+  padding: 14px 18px 12px;
+  margin-bottom: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-bg, #fff);
+  box-sizing: border-box;
+}
+
+.closeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg, #fff);
+  cursor: pointer;
+  color: var(--color-muted);
+  border-radius: 0;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.closeIcon {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.intro {
+  margin: 0 0 14px;
+  color: var(--color-muted);
+  line-height: 1.65;
+}
+
+.introTime {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.introEndDate {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.existingBlock {
+  margin: 0 0 16px;
+  padding: 12px 12px 10px;
+  background: #fffbeb;
+  border: 1px solid #e9c04a;
+  box-sizing: border-box;
+}
+
+/* 파란 박스(.updateBlock)와 같은 역할: 섹션 제목 = accent, 번호·항목 제목 = 진한 테마색, 본문 = 거의 검정(순검정 아님) */
+.existingBlock .blockLabel {
+  color: #92400e;
+  letter-spacing: -0.01em;
+}
+
+.existingBlock .numberedList {
+  margin-bottom: 0;
+}
+
+.existingBlock .numberedList > li::marker {
+  color: #78350f;
+  font-weight: 600;
+}
+
+.existingBlock .itemHeading {
+  color: #78350f;
+}
+
+.existingBlock .itemBody {
+  color: #292524;
+}
+
+.blockLabel {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.numberedList {
+  margin: 0 0 16px;
+  padding-left: 1.35em;
+  list-style: decimal;
+}
+
+.numberedList > li {
+  margin-bottom: 12px;
+  padding-left: 0.25em;
+}
+
+.numberedList > li:last-child {
+  margin-bottom: 0;
+}
+
+.itemHeading {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--color-text);
+}
+
+.itemBody {
+  margin: 0;
+  line-height: 1.65;
+  color: var(--color-text);
+}
+
+.updateBlock {
+  margin-top: 4px;
+  padding: 12px 12px 10px;
+  background: rgba(61, 125, 228, 0.09);
+  border: 1px solid rgba(61, 125, 228, 0.35);
+}
+
+.updateBlockTitle {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: -0.01em;
+}
+
+.numberedListUpdate {
+  margin: 0;
+  padding-left: 1.35em;
+  list-style: decimal;
+}
+
+.numberedListUpdate > li {
+  margin-bottom: 12px;
+  padding-left: 0.25em;
+}
+
+.numberedListUpdate > li:last-child {
+  margin-bottom: 0;
+}
+
+.numberedListUpdate > li::marker {
+  color: #1e4a8a;
+  font-weight: 600;
+}
+
+.numberedListUpdate .itemHeading {
+  color: #1e4a8a;
+}
+
+.numberedListUpdate .itemBody {
+  color: #1a1a1a;
+}
+
+.link {
+  color: var(--color-accent);
+  word-break: break-all;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .banner {
+    padding-left: 16px;
+    padding-right: 16px;
+    gap: 8px;
+  }
+
+  .dialog[open] {
+    width: min(calc(100vw - 24px), 520px);
+    /* 주소창·노치·홈 인디케이터를 피해 화면 안에 고정 */
+    max-height: min(
+      72dvh,
+      calc(
+        100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 40px
+      )
+    );
+  }
+
+  .headRow {
+    padding: 12px 14px 10px;
+  }
+
+  .inner {
+    padding: 0 14px 16px;
+  }
+}

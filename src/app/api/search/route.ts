@@ -1,7 +1,7 @@
 import { load } from 'cheerio';
 import { Redis } from '@upstash/redis';
-import type { ResultColor, SearchMode, SubmissionResult, SseEvent } from '@/types/search';
-import { BOJ_BASE, BOJ_ID_REGEX, SERVICE_END_MS } from '@/lib/constants';
+import type { ResultColor, SearchMode, SearchStrategy, SubmissionResult, SseEvent } from '@/types/search';
+import { BOJ_BASE, BOJ_ID_REGEX, DEFAULT_SEARCH_STRATEGY, SEARCH_STRATEGY_CONFIG_KEY, SERVICE_END_MS } from '@/lib/constants';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0';
 const SECONDS_PER_MINUTE = 60;
@@ -54,11 +54,13 @@ function getRandomHeaders(): Record<string, string> {
   };
 }
 
-const DELAY_MIN_MS = 100;
-const DELAY_MAX_MS = 300;
+/** BOJ로 가는 각 fetch 직전 대기. 과거 100–300ms 대비 상향(부하 완화). */
+const DELAY_MIN_MS = 350;
+const DELAY_MAX_MS = 750;
 const PAGE_SIZE = 20;
-const MAX_BINARY_SEARCH_STEPS = 27;
-const BINARY_SEARCH_START_SUBMISSION_ID = 22_958;
+const BINARY_MAX_STEPS = 27;
+const TERNARY_MAX_STEPS = 18;
+const SEARCH_START_SUBMISSION_ID = 22_958;
 const REQUEST_DEADLINE_MS = 110_000;
 const SEARCH_RESULT_CACHE_TTL_SEC = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * DAYS_PER_YEAR * 2;
 const SEARCH_CHECKPOINT_TTL_SEC = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * 15;
@@ -73,14 +75,21 @@ function ensureWithinDeadline(startedAtMs: number): void {
   }
 }
 
-async function fetchBoj(url: string, startedAtMs: number): Promise<string> {
+async function sleepBeforeRequest(startedAtMs: number): Promise<void> {
   ensureWithinDeadline(startedAtMs);
   await sleep(DELAY_MIN_MS + Math.random() * (DELAY_MAX_MS - DELAY_MIN_MS));
   ensureWithinDeadline(startedAtMs);
+}
 
+async function fetchBojPage(url: string): Promise<string> {
   const response = await fetch(url, { headers: getRandomHeaders() });
   if (!response.ok) throw new Error(`BOJ 응답 오류: ${response.status}`);
   return response.text();
+}
+
+async function fetchBoj(url: string, startedAtMs: number): Promise<string> {
+  await sleepBeforeRequest(startedAtMs);
+  return fetchBojPage(url);
 }
 
 type ParsedPage = {
@@ -97,6 +106,19 @@ type SearchCheckpoint = {
   hi: number;
   iteration: number;
 };
+
+type SearchBounds = {
+  latestId: number;
+  lo: number;
+  hi: number;
+  iteration: number;
+};
+
+type Direction = 'left' | 'right' | 'found';
+
+type StepOutcome =
+  | { kind: 'continue'; bounds: SearchBounds }
+  | { kind: 'found'; result: SubmissionResult | null };
 
 function normalizeResultColor(rawColor: string): ResultColor {
   const normalizedColor = rawColor.trim().toLowerCase();
@@ -157,6 +179,16 @@ function parsePage(html: string): ParsedPage {
   return { rowCount, firstSubmissionId, lastRow, lastNonAcRow, hasNonAc };
 }
 
+function classifyPage(mode: SearchMode, parsed: ParsedPage): Direction {
+  if (parsed.rowCount === 0) return 'right';
+  if (parsed.rowCount >= PAGE_SIZE) return 'left';
+  switch (mode) {
+    case 'first':
+    case 'correct': return 'found';
+    case 'wrong':   return parsed.hasNonAc ? 'left' : 'right';
+  }
+}
+
 function buildStatusUrl(userId: string, top: number | null, mode: SearchMode): string {
   const params = new URLSearchParams({ user_id: userId });
   if (top !== null) params.set('top', String(top));
@@ -170,6 +202,18 @@ function getResultCacheKey(userId: string, mode: SearchMode): string {
 
 function getCheckpointKey(userId: string, mode: SearchMode): string {
   return `search:checkpoint:${mode}:${userId}`;
+}
+
+function extractUuid(cookieHeader: string | null): string | null {
+  if (!cookieHeader) return null;
+  return /(?:^|;\s*)chat-uuid=([^;]+)/.exec(cookieHeader)?.[1]?.trim() ?? null;
+}
+
+function parseRedisJsonValue<T>(raw: unknown): T | null {
+  if (!raw) return null;
+  if (typeof raw === 'string') return JSON.parse(raw) as T;
+  if (typeof raw === 'object') return raw as T;
+  return null;
 }
 
 async function loadCachedResult(userId: string, mode: SearchMode): Promise<SubmissionResult | null> {
@@ -252,22 +296,15 @@ async function clearCheckpoint(userId: string, mode: SearchMode): Promise<void> 
   }
 }
 
-type SearchBounds = {
-  latestId: number;
-  lo: number;
-  hi: number;
-  iteration: number;
-};
-
-function resolveSearchBounds(latestId: number, checkpoint: SearchCheckpoint | null): SearchBounds {
+function resolveSearchBounds(latestId: number, checkpoint: SearchCheckpoint | null, maxSteps: number): SearchBounds {
   if (!checkpoint || checkpoint.latestId !== latestId) {
-    const lo = Math.min(BINARY_SEARCH_START_SUBMISSION_ID, latestId);
+    const lo = Math.min(SEARCH_START_SUBMISSION_ID, latestId);
     return { latestId, lo, hi: latestId, iteration: 0 };
   }
 
   const lo = Math.max(1, Math.min(checkpoint.lo, latestId));
   const hi = Math.max(lo, Math.min(checkpoint.hi, latestId));
-  const iteration = Math.max(0, Math.min(checkpoint.iteration, MAX_BINARY_SEARCH_STEPS));
+  const iteration = Math.max(0, Math.min(checkpoint.iteration, maxSteps));
   return { latestId, lo, hi, iteration };
 }
 
@@ -291,11 +328,60 @@ function selectFinalResult(mode: SearchMode, parsed: ParsedPage): SubmissionResu
   }
 }
 
-function parseRedisJsonValue<T>(raw: unknown): T | null {
-  if (!raw) return null;
-  if (typeof raw === 'string') return JSON.parse(raw) as T;
-  if (typeof raw === 'object') return raw as T;
-  return null;
+async function loadSearchStrategy(): Promise<SearchStrategy> {
+  if (!redis) return DEFAULT_SEARCH_STRATEGY;
+  try {
+    const raw = await redis.get(SEARCH_STRATEGY_CONFIG_KEY);
+    if (raw === 'binary' || raw === 'ternary') return raw;
+    return DEFAULT_SEARCH_STRATEGY;
+  }
+  catch (error) {
+    console.error('[strategy] failed to load search strategy', error);
+    return DEFAULT_SEARCH_STRATEGY;
+  }
+}
+
+async function binaryStep(
+  userId: string,
+  mode: SearchMode,
+  startedAtMs: number,
+  bounds: SearchBounds,
+): Promise<StepOutcome> {
+  const mid = Math.floor((bounds.lo + bounds.hi) / 2);
+  const html = await fetchBoj(buildStatusUrl(userId, mid, mode), startedAtMs);
+  const parsed = parsePage(html);
+  const direction = classifyPage(mode, parsed);
+
+  if (direction === 'found') return { kind: 'found', result: parsed.lastRow };
+  if (direction === 'left') return { kind: 'continue', bounds: { ...bounds, hi: mid } };
+  return { kind: 'continue', bounds: { ...bounds, lo: mid + 1 } };
+}
+
+async function ternaryStep(
+  userId: string,
+  mode: SearchMode,
+  startedAtMs: number,
+  bounds: SearchBounds,
+): Promise<StepOutcome> {
+  const t1 = bounds.lo + Math.floor((bounds.hi - bounds.lo) / 3);
+  const t2 = bounds.lo + Math.floor(2 * (bounds.hi - bounds.lo) / 3);
+
+  // 이진과 동일하게 요청마다 sleepBeforeRequest 적용. 병렬이 아니라 순차로 두어
+  // 같은 순간에 백준으로 두 연결이 동시에 열리지 않게 한다.
+  const html1 = await fetchBoj(buildStatusUrl(userId, t1, mode), startedAtMs);
+  const r1 = parsePage(html1);
+  const d1 = classifyPage(mode, r1);
+
+  if (d1 === 'found') return { kind: 'found', result: r1.lastRow };
+  if (d1 === 'left') return { kind: 'continue', bounds: { ...bounds, hi: t1 } };
+
+  const html2 = await fetchBoj(buildStatusUrl(userId, t2, mode), startedAtMs);
+  const r2 = parsePage(html2);
+  const d2 = classifyPage(mode, r2);
+
+  if (d2 === 'found') return { kind: 'found', result: r2.lastRow };
+  if (d2 === 'left') return { kind: 'continue', bounds: { ...bounds, lo: t1 + 1, hi: t2 } };
+  return { kind: 'continue', bounds: { ...bounds, lo: t2 + 1 } };
 }
 
 function createSseResponse(events: SseEvent[]): Response {
@@ -336,6 +422,17 @@ export async function POST(req: Request): Promise<Response> {
     ]);
   }
 
+  const uuid = extractUuid(req.headers.get('cookie'));
+  if (uuid) {
+    const rlKey = `search:rl:${uuid}:${mode}`;
+    const existing = await redis?.get(rlKey);
+    if (existing) {
+      const ttl = (await redis?.ttl(rlKey)) ?? 30;
+      return createSseResponse([{ type: 'rate_limit', remainingSeconds: Math.max(1, ttl) }]);
+    }
+    void redis?.set(rlKey, '1', { ex: 30 }).catch((e) => console.error('[rl] set failed', e));
+  }
+
   if (Date.now() >= SERVICE_END_MS) {
     return createSseResponse([{ type: 'ended' }]);
   }
@@ -371,58 +468,38 @@ export async function POST(req: Request): Promise<Response> {
         }
 
         const latestId = Number(initParsed.firstSubmissionId);
-        const checkpoint = await loadCheckpoint(searchUserId, mode);
+        const [checkpoint, strategy] = await Promise.all([
+          loadCheckpoint(searchUserId, mode),
+          loadSearchStrategy(),
+        ]);
+
         const hasStaleCheckpoint = checkpoint !== null && checkpoint.latestId !== latestId;
         if (hasStaleCheckpoint) {
           await clearCheckpoint(searchUserId, mode);
         }
 
-        const bounds = resolveSearchBounds(latestId, checkpoint);
+        const maxSteps = strategy === 'ternary' ? TERNARY_MAX_STEPS : BINARY_MAX_STEPS;
+        const searchStep = strategy === 'ternary' ? ternaryStep : binaryStep;
+        let bounds = resolveSearchBounds(latestId, checkpoint, maxSteps);
 
-        while (bounds.lo < bounds.hi && bounds.iteration < MAX_BINARY_SEARCH_STEPS) {
-          send({ type: 'progress', percent: Math.round((bounds.iteration / MAX_BINARY_SEARCH_STEPS) * 100) });
-          bounds.iteration += 1;
+        while (bounds.lo < bounds.hi && bounds.iteration < maxSteps) {
+          send({ type: 'progress', percent: Math.round((bounds.iteration / maxSteps) * 100) });
+          bounds = { ...bounds, iteration: bounds.iteration + 1 };
 
-          const mid = Math.floor((bounds.lo + bounds.hi) / 2);
-          const html = await fetchBoj(buildStatusUrl(searchUserId, mid, mode), startedAtMs);
-          const { rowCount, lastRow, hasNonAc } = parsePage(html);
-
-          if (rowCount === 0) {
-            bounds.lo = mid + 1;
-            await saveSearchBounds(searchUserId, mode, bounds);
-            continue;
+          const outcome = await searchStep(searchUserId, mode, startedAtMs, bounds);
+          if (outcome.kind === 'found') {
+            if (!outcome.result) {
+              await clearAndSendEmpty();
+            }
+            else {
+              await sendResult(outcome.result);
+            }
+            controller.close();
+            return;
           }
 
-          if (rowCount >= PAGE_SIZE) {
-            bounds.hi = mid;
-            await saveSearchBounds(searchUserId, mode, bounds);
-            continue;
-          }
-
-          switch (mode) {
-            case 'first':
-            case 'correct':
-              if (!lastRow) {
-                await clearAndSendEmpty();
-              }
-              else {
-                await sendResult(lastRow);
-              }
-              controller.close();
-              return;
-            case 'wrong':
-              if (!hasNonAc) {
-                bounds.lo = mid + 1;
-                await saveSearchBounds(searchUserId, mode, bounds);
-                continue;
-              }
-              bounds.hi = mid;
-              await saveSearchBounds(searchUserId, mode, bounds);
-              continue;
-            default:
-              bounds.lo = mid + 1;
-              await saveSearchBounds(searchUserId, mode, bounds);
-          }
+          bounds = outcome.bounds;
+          await saveSearchBounds(searchUserId, mode, bounds);
         }
 
         // 루프 종료: top=lo 페이지에서 최종 추출

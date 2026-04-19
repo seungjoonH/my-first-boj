@@ -2,17 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { SearchMode } from '@/types/search';
+import type { HistoryEntry, SearchMode } from '@/types/search';
 import { Header } from '@/components/header/Header';
 import { Tabs } from '@/components/tabs/Tabs';
 import { Countdown } from '@/components/countdown/Countdown';
 import { InputArea } from '@/components/inputArea/InputArea';
 import { ResultCard } from '@/components/resultCard/ResultCard';
+import { Sidebar } from '@/components/sidebar/Sidebar';
+import { SearchNotice } from '@/components/searchNotice/SearchNotice';
 import { Toast } from '@/components/toast/Toast';
 import { useSearch } from '@/hooks/useSearch';
-import { useRateLimit } from '@/hooks/useRateLimit';
 import { useToast } from '@/hooks/useToast';
-import { cleanInvalidCaches, loadCache } from '@/lib/cache';
+import { cleanInvalidCaches, clearCache, loadCache } from '@/lib/cache';
+import { clearProgress, loadProgress } from '@/lib/searchProgress';
+import { loadHistory, clearHistory } from '@/lib/searchHistory';
 import { BOJ_ID_REGEX } from '@/lib/constants';
 import styles from './page.module.css';
 
@@ -45,16 +48,44 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<SearchMode>('first');
   const [userId, setUserId] = useState('');
   const [isInputVisible, setIsInputVisible] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [savedProgress, setSavedProgress] = useState<number | undefined>(undefined);
+  const [isMobile, setIsMobile] = useState(false);
   const restoredRef = useRef(false);
   const userIdRef = useRef('');
 
   const { message: toastMessage, showToast } = useToast();
-  const { isLimited, remainingSeconds, recordClick } = useRateLimit();
-  const { state, progress, result, handleSearch, handleReset } = useSearch(showToast);
+
+  const handleHistoryChange = useCallback(() => {
+    setHistory(loadHistory());
+  }, []);
+
+  const { state, progress, result, handleSearch, handleReset } = useSearch(showToast, handleHistoryChange);
+
+  // 마운트 시 초기화
+  useEffect(() => {
+    setHistory(loadHistory());
+    const mq = window.matchMedia('(max-width: 560px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     userIdRef.current = userId;
   }, [userId]);
+
+  // userId / activeTab 변경 시 저장된 진행률 로드
+  useEffect(() => {
+    const trimmed = userId.trim();
+    if (!trimmed) {
+      setSavedProgress(undefined);
+      return;
+    }
+    setSavedProgress(loadProgress(trimmed, activeTab) ?? undefined);
+  }, [userId, activeTab]);
 
   useEffect(() => {
     if (restoredRef.current) return;
@@ -102,21 +133,40 @@ export default function HomePage() {
       return;
     }
 
-    const hasCachedResult = loadCache(trimmed, activeTab) !== null;
-
-    if (!hasCachedResult && isLimited()) {
-      showToast(`${remainingSeconds()}초 후에 다시 시도해주세요`);
-      return;
-    }
-
-    if (!hasCachedResult) recordClick();
     void handleSearch(trimmed, activeTab);
-  }, [userId, activeTab, isLimited, remainingSeconds, recordClick, handleSearch, showToast]);
+  }, [userId, activeTab, handleSearch, showToast]);
 
   const handleResetWithUser = useCallback(() => {
     handleReset();
     setIsInputVisible(true);
   }, [handleReset]);
+
+  const handleSelectEntry = useCallback(
+    (entry: HistoryEntry) => {
+      setUserId(entry.userId);
+      setActiveTab(entry.mode);
+      if (entry.completedAt !== null) {
+        void handleSearch(entry.userId, entry.mode);
+        setIsInputVisible(false);
+      }
+      else {
+        handleReset();
+        setIsInputVisible(true);
+      }
+    },
+    [handleSearch, handleReset],
+  );
+
+  const handleDeleteEntry = useCallback((uid: string, mode: SearchMode) => {
+    clearCache(uid, mode);
+    clearProgress(uid, mode);
+    setHistory(loadHistory());
+  }, []);
+
+  const handleClearAll = useCallback(() => {
+    clearHistory();
+    setHistory([]);
+  }, []);
 
   const isResultState = state === 'result' && result !== null;
 
@@ -133,6 +183,7 @@ export default function HomePage() {
           disabled={state === 'loading'}
           isLoading={state === 'loading'}
           progress={progress}
+          savedProgress={state === 'idle' ? savedProgress : undefined}
         />
       ) : null;
       break;
@@ -165,7 +216,17 @@ export default function HomePage() {
 
   return (
     <>
-      <Header />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        history={history}
+        onSelectEntry={handleSelectEntry}
+        onDeleteEntry={handleDeleteEntry}
+        onClearAll={handleClearAll}
+        isMobile={isMobile}
+      />
+      <Header onToggleSidebar={() => setIsSidebarOpen((v) => !v)} />
+      <SearchNotice />
       <main className={styles.main}>
         <div className={styles.content}>
           <div className={styles.headline}>

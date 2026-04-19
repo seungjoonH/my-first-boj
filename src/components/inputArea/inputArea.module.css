@@ -32,17 +32,22 @@
   padding: 10px 12px;
   font-size: 13px;
   font-weight: 600;
-  background: var(--color-btn-bg);
   color: var(--color-btn-text);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  background-color: var(--color-btn-bg-empty);
+  background-image: linear-gradient(to right, var(--color-btn-bg), var(--color-btn-bg));
+  background-repeat: no-repeat;
+  background-size: var(--progress-pct, 100%) 100%;
+  transition: background-size 0.3s ease;
 }
 
 .button:disabled:not(.loading) {
-  background: #aaa;
+  background-color: #aaa;
+  background-image: none;
   cursor: not-allowed;
 }
 
@@ -61,17 +66,6 @@
   flex-shrink: 0;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.spinner {
-  display: inline-block;
-  width: 13px;
-  height: 13px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+.percent {
   flex-shrink: 0;
 }

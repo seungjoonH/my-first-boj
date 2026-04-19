@@ -2,9 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { generateNickname, getKeywordPosition } from '@/lib/chatNickname';
-import { B_BADGE_VARIANT_MAP, KEYWORD_DISPLAY_MAX, KEYWORD_PARALLAX_FACTOR, KW_ENTER_DELAY_STEP_MS, TOOLTIP_Y_OFFSET_PX } from '@/lib/chatConstants';
+import {
+  type BBadgeVariant,
+  B_BADGE_VARIANT_MAP,
+  KEYWORD_DISPLAY_MAX,
+  KEYWORD_PARALLAX_FACTOR,
+  KW_ENTER_DELAY_STEP_MS,
+  TOOLTIP_Y_OFFSET_PX,
+} from '@/lib/chatConstants';
 import { parseKeywordValue } from '@/lib/chatKeyword';
 import { buildCls } from '@/lib/buildCls';
+import { AdminBadge, NicknameBadgeBase } from '../nicknameBadge/NicknameBadge';
 import type { KeywordBackgroundProps } from './type';
 import styles from './KeywordBackground.module.css';
 
@@ -28,7 +36,7 @@ export function KeywordBackground({
     keywordId: string;
     aBadge: string;
     bBadge: string;
-    bVariant: string;
+    bVariant: BBadgeVariant;
     isAdmin: boolean;
     x: number;
     y: number;
@@ -48,20 +56,20 @@ export function KeywordBackground({
       ? {
           aBadge: 'ADMIN',
           bBadge: '',
-          bVariant: 'muted',
+          bVariant: 'muted' as BBadgeVariant,
           isAdmin: true,
         }
       : ownerNickname
       ? {
           aBadge: ownerNickname.aBadge,
           bBadge: ownerNickname.bBadge,
-          bVariant: B_BADGE_VARIANT_MAP[ownerNickname.bBadge] ?? 'muted',
+          bVariant: (B_BADGE_VARIANT_MAP[ownerNickname.bBadge] ?? 'muted') as BBadgeVariant,
           isAdmin: false,
         }
       : {
           aBadge: '닉네임 정보',
           bBadge: '없음',
-          bVariant: 'muted',
+          bVariant: 'muted' as BBadgeVariant,
           isAdmin: false,
         };
     const rect = el.getBoundingClientRect();
@@ -104,9 +112,6 @@ export function KeywordBackground({
   const displayed = keywords.slice(-KEYWORD_DISPLAY_MAX);
 
   const rootCls = buildCls(styles.root, !isVisible && styles['root--hidden']);
-  const tooltipBBadgeCls = tooltip
-    ? buildCls(styles.tooltipBBadge, styles[`tooltipBBadge--${tooltip.bVariant}`])
-    : styles.tooltipBBadge;
 
   return (
     <div ref={rootRef} className={rootCls} aria-hidden="true">
@@ -172,15 +177,9 @@ export function KeywordBackground({
           }
         >
           {tooltip.isAdmin ? (
-            <span className={styles.tooltipAdmin}>{tooltip.aBadge}</span>
+            <AdminBadge />
           ) : (
-            <>
-              <span className={styles.tooltipABadge}>{tooltip.aBadge}</span>
-              <span className={styles.tooltipSeparator}>의</span>
-              <span className={tooltipBBadgeCls}>
-                {tooltip.bBadge}
-              </span>
-            </>
+            <NicknameBadgeBase aBadge={tooltip.aBadge} bBadge={tooltip.bBadge} bVariant={tooltip.bVariant} />
           )}
         </span>
       )}

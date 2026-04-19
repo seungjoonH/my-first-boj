@@ -1,0 +1,160 @@
+.root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 280px;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideIn 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.root--closing {
+  animation: slideOut 180ms ease-in forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes slideOut {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 199;
+  animation: fadeIn 240ms ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.clearAllButton {
+  font-size: 12px;
+  color: var(--color-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.clearAllButton:hover {
+  color: var(--color-text);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  padding: 8px 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 0;
+}
+
+.itemButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.itemButton:hover {
+  background: var(--color-border);
+}
+
+.itemUserId {
+  font-size: 13px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.itemMode {
+  font-size: 11px;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  padding: 1px 4px;
+}
+
+.itemPercent {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.deleteButton {
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--color-muted);
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.deleteButton:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.empty {
+  padding: 16px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+@media (max-width: 560px) {
+  .root {
+    width: 100%;
+    max-width: 320px;
+  }
+}

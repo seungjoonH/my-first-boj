@@ -74,48 +74,6 @@
   pointer-events: none;
 }
 
-.tooltipABadge {
-  color: var(--color-muted);
-}
-
-.tooltipSeparator {
-  color: var(--color-muted);
-  margin: 0 4px;
-}
-
-.tooltipBBadge {
-  font-weight: 600;
-}
-
-.tooltipBBadge--ac {
-  color: var(--result-ac);
-}
-
-.tooltipBBadge--wa {
-  color: var(--result-wa);
-}
-
-.tooltipBBadge--tle {
-  color: var(--result-tle);
-}
-
-.tooltipBBadge--ce {
-  color: var(--result-ce);
-}
-
-.tooltipBBadge--rte {
-  color: var(--result-rte);
-}
-
-.tooltipBBadge--muted {
-  color: var(--color-muted);
-}
-
-.tooltipAdmin {
-  font-weight: 700;
-  color: var(--color-text);
-}
-
 @keyframes keywordFadeIn {
   from {
     opacity: 0;
