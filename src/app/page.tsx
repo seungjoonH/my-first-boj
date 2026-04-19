@@ -9,7 +9,7 @@ import { Countdown } from '@/components/countdown/Countdown';
 import { InputArea } from '@/components/inputArea/InputArea';
 import { ResultCard } from '@/components/resultCard/ResultCard';
 import { Sidebar } from '@/components/sidebar/Sidebar';
-import { SearchNotice0419, SearchNotice0420 } from '@/components/searchNotice/SearchNotice';
+import { SearchNotice0419 } from '@/components/searchNotice/SearchNotice';
 import { Toast } from '@/components/toast/Toast';
 import { useSearch } from '@/hooks/useSearch';
 import { useToast } from '@/hooks/useToast';
@@ -52,8 +52,6 @@ export default function HomePage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [savedProgress, setSavedProgress] = useState<number | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
-  const [prevNoticeOpen, setPrevNoticeOpen] = useState(false);
-  const [recentNoticeOpen, setRecentNoticeOpen] = useState(false);
   const restoredRef = useRef(false);
   const userIdRef = useRef('');
 
@@ -229,17 +227,7 @@ export default function HomePage() {
       />
       <div className={styles.shell}>
         <Header onToggleSidebar={() => setIsSidebarOpen((v) => !v)} />
-        <SearchNotice0420
-          onViewPrevNotice={() => setPrevNoticeOpen(true)}
-          externalOpen={recentNoticeOpen}
-          onExternalClose={() => setRecentNoticeOpen(false)}
-        />
-        <SearchNotice0419
-          hideStrip
-          externalOpen={prevNoticeOpen}
-          onExternalClose={() => setPrevNoticeOpen(false)}
-          onViewRecentNotice={() => setRecentNoticeOpen(true)}
-        />
+        <SearchNotice0419 />
         <main className={styles.main}>
           <div className={styles.content}>
             <div className={styles.headline}>

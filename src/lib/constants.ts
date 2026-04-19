@@ -18,4 +18,4 @@ export type SearchExploreMode = 'redis_only' | 'redis_and_boj';
  * - `redis_only`: BOJ(백준) HTTP 요청 없음. Redis에 저장된 조회 결과 캐시만 반환; 없으면 에러.
  * - `redis_and_boj`: 캐시 없을 때 BOJ status 페이지를 호출해 탐색.
  */
-export const SEARCH_EXPLORE_MODE: SearchExploreMode = 'redis_only';
+export const SEARCH_EXPLORE_MODE: SearchExploreMode = 'redis_and_boj';
