@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import type { SearchMode, SubmissionResult, SseEvent } from '@/types/search';
+import { SEARCH_EXPLORE_MODE } from '@/lib/constants';
 import { loadCache, saveCache } from '@/lib/cache';
 import { saveProgress, clearProgress } from '@/lib/searchProgress';
 
@@ -69,6 +70,21 @@ export function useSearch(
         setResult(cached);
         setState('result');
         return;
+      }
+
+      if (SEARCH_EXPLORE_MODE === 'redis_only') {
+        try {
+          const statusRes = await fetch('/api/search/redis-config');
+          const data = (await statusRes.json()) as { redisConfigured?: boolean };
+          if (!statusRes.ok || !data.redisConfigured) {
+            onError('Redis에 연결할 수 없어 제출 기록 탐색을 시작할 수 없습니다.');
+            return;
+          }
+        }
+        catch {
+          onError('잠시 후 다시 시도해주세요');
+          return;
+        }
       }
 
       activeUserIdRef.current = userId;

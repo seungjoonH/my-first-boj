@@ -9,4 +9,13 @@ export const BOJ_BASE = 'https://www.acmicpc.net';
 export const BOJ_ID_REGEX = /^[a-zA-Z0-9_]{1,99}$/;
 
 export const SEARCH_STRATEGY_CONFIG_KEY = 'search:strategy';
-export const DEFAULT_SEARCH_STRATEGY: 'binary' | 'ternary' = 'ternary';
+export const DEFAULT_SEARCH_STRATEGY: 'binary' | 'ternary' = 'binary';
+
+/** 제출 기록 탐색이 Redis(원격 저장소)에 어떻게 의존하는지 */
+export type SearchExploreMode = 'redis_only' | 'redis_and_boj';
+
+/**
+ * - `redis_only`: BOJ(백준) HTTP 요청 없음. Redis에 저장된 조회 결과 캐시만 반환; 없으면 에러.
+ * - `redis_and_boj`: 캐시 없을 때 BOJ status 페이지를 호출해 탐색.
+ */
+export const SEARCH_EXPLORE_MODE: SearchExploreMode = 'redis_only';

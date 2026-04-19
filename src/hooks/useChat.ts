@@ -29,6 +29,7 @@ type ChatState = {
   isConnected: boolean;
   warnCount: number;
   nickCooldownTtlSec: number;
+  onlineCount: number | null;
 };
 
 type PendingKeywordAnimation = {
@@ -50,6 +51,7 @@ const INITIAL_STATE: ChatState = {
   isConnected: false,
   warnCount: 0,
   nickCooldownTtlSec: NICK_RL_TTL_SEC,
+  onlineCount: null,
 };
 
 const NICK_COOLDOWN_UI_TICK_MS = 500;
@@ -292,6 +294,7 @@ export function useChat(isOpen: boolean, onClose: () => void) {
         isConnected: false,
         warnCount: init.warnCount ?? 0,
         nickCooldownTtlSec: init.nickCooldownTtlSec ?? NICK_RL_TTL_SEC,
+        onlineCount: null,
       });
 
       while (!cancelled) {
@@ -385,6 +388,9 @@ export function useChat(isOpen: boolean, onClose: () => void) {
                   });
                   break;
                 }
+                case 'online':
+                  setState((prev) => ({ ...prev, onlineCount: event.count }));
+                  break;
                 case 'ping':
                   break;
               }

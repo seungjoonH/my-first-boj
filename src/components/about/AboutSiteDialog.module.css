@@ -156,15 +156,14 @@
 }
 
 .emailLink {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-skip-ink: auto;
-  text-underline-offset: 1px;
+  color: var(--color-accent, #3d7de4);
   line-height: inherit;
 }
 
 .emailLink:hover {
-  color: var(--color-accent, #3d7de4);
+  text-decoration: underline;
+  text-decoration-skip-ink: auto;
+  text-underline-offset: 1px;
 }
 
 .copyBtn {

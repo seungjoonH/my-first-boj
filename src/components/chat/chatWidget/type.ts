@@ -15,6 +15,7 @@ export type ChatWidgetProps = {
   sendCooldownRemainingSec: number;
   sendCooldownRatio: number;
   warnCount: number;
+  onlineCount: number | null;
   isLoaded: boolean;
   isClosing: boolean;
   onSend: (text: string) => void;

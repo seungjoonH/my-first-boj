@@ -38,6 +38,10 @@ export function userBanSetKey(): string {
   return 'chat:user:banned';
 }
 
+export function onlineSetKey(): string {
+  return 'chat:online';
+}
+
 export function msgRlKey(scopeKey: string): string {
   return `chat:rl:msg:${scopeKey}`;
 }

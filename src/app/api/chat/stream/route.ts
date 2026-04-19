@@ -1,4 +1,4 @@
-import { chatRedis, msgKey, kwKey, getUserSalt, getUserCompanion, parseMsg } from '@/lib/chatRedis';
+import { chatRedis, msgKey, kwKey, getUserSalt, getUserCompanion, parseMsg, onlineSetKey } from '@/lib/chatRedis';
 import { CHAT_MESSAGES_REDIS_MAX, SSE_POLL_BASE_MS, SSE_HEARTBEAT_MS } from '@/lib/chatConstants';
 import type { ChatSseEvent, ChatMessage } from '@/types/chat';
 import { parseKeywordValue } from '@/lib/chatKeyword';
@@ -37,6 +37,11 @@ export async function GET(req: Request): Promise<Response> {
 
   const encoder = new TextEncoder();
 
+  // 접속 시 online set에 추가
+  if (viewerUuid) {
+    await chatRedis?.sadd(onlineSetKey(), viewerUuid).catch(() => {});
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
       function send(event: ChatSseEvent): void {
@@ -47,6 +52,13 @@ export async function GET(req: Request): Promise<Response> {
           // enqueue 실패(클라이언트 종료 등) 시 루프는 signal 로 정리됨
         }
       }
+
+      // 연결 직후 현재 접속자 수 전송
+      try {
+        const count = Number(await chatRedis?.scard(onlineSetKey()) ?? 0);
+        send({ type: 'online', count });
+      }
+      catch { /* ignore */ }
 
       let lastTimestamp = since;
       let lastKwIndex = lastKwIdx;
@@ -103,7 +115,13 @@ export async function GET(req: Request): Promise<Response> {
             }
 
             if (Date.now() - lastHeartbeat > SSE_HEARTBEAT_MS) {
-              send({ type: 'ping' });
+              try {
+                const count = Number(await chatRedis?.scard(onlineSetKey()) ?? 0);
+                send({ type: 'online', count });
+              }
+              catch {
+                send({ type: 'ping' });
+              }
               lastHeartbeat = Date.now();
             }
           }
@@ -114,6 +132,9 @@ export async function GET(req: Request): Promise<Response> {
         }
       }
       finally {
+        if (viewerUuid) {
+          await chatRedis?.srem(onlineSetKey(), viewerUuid).catch(() => {});
+        }
         try {
           controller.close();
         }

@@ -9,7 +9,7 @@ import { Countdown } from '@/components/countdown/Countdown';
 import { InputArea } from '@/components/inputArea/InputArea';
 import { ResultCard } from '@/components/resultCard/ResultCard';
 import { Sidebar } from '@/components/sidebar/Sidebar';
-import { SearchNotice } from '@/components/searchNotice/SearchNotice';
+import { SearchNotice0419, SearchNotice0420 } from '@/components/searchNotice/SearchNotice';
 import { Toast } from '@/components/toast/Toast';
 import { useSearch } from '@/hooks/useSearch';
 import { useToast } from '@/hooks/useToast';
@@ -52,6 +52,8 @@ export default function HomePage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [savedProgress, setSavedProgress] = useState<number | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
+  const [prevNoticeOpen, setPrevNoticeOpen] = useState(false);
+  const [recentNoticeOpen, setRecentNoticeOpen] = useState(false);
   const restoredRef = useRef(false);
   const userIdRef = useRef('');
 
@@ -215,7 +217,7 @@ export default function HomePage() {
   }
 
   return (
-    <>
+    <div className={styles.app}>
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -225,27 +227,39 @@ export default function HomePage() {
         onClearAll={handleClearAll}
         isMobile={isMobile}
       />
-      <Header onToggleSidebar={() => setIsSidebarOpen((v) => !v)} />
-      <SearchNotice />
-      <main className={styles.main}>
-        <div className={styles.content}>
-          <div className={styles.headline}>
-            <h1 className={styles.title}>나의 첫 백준은?</h1>
-            <p className={styles.subtitle}>나의 첫 제출 내역을 확인해보세요.</p>
+      <div className={styles.shell}>
+        <Header onToggleSidebar={() => setIsSidebarOpen((v) => !v)} />
+        <SearchNotice0420
+          onViewPrevNotice={() => setPrevNoticeOpen(true)}
+          externalOpen={recentNoticeOpen}
+          onExternalClose={() => setRecentNoticeOpen(false)}
+        />
+        <SearchNotice0419
+          hideStrip
+          externalOpen={prevNoticeOpen}
+          onExternalClose={() => setPrevNoticeOpen(false)}
+          onViewRecentNotice={() => setRecentNoticeOpen(true)}
+        />
+        <main className={styles.main}>
+          <div className={styles.content}>
+            <div className={styles.headline}>
+              <h1 className={styles.title}>나의 첫 백준은?</h1>
+              <p className={styles.subtitle}>나의 첫 제출 내역을 확인해보세요.</p>
+            </div>
+            <Countdown />
+            <div className={styles.tabsRow}>
+              <Tabs active={activeTab} onChange={handleTabChange} />
+              {isResultState && (
+                <button className={styles.tabsResetButton} onClick={handleResetWithUser}>
+                  다시 찾아보기
+                </button>
+              )}
+            </div>
+            <div>{content}</div>
           </div>
-          <Countdown />
-          <div className={styles.tabsRow}>
-            <Tabs active={activeTab} onChange={handleTabChange} />
-            {isResultState && (
-              <button className={styles.tabsResetButton} onClick={handleResetWithUser}>
-                다시 찾아보기
-              </button>
-            )}
-          </div>
-          <div>{content}</div>
-        </div>
-      </main>
+        </main>
+      </div>
       <Toast message={toastMessage} />
-    </>
+    </div>
   );
 }

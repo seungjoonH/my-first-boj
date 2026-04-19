@@ -1,11 +1,51 @@
+.app {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.shell {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 헤더·공지 띠는 줄어들지 않게 — main이 압축되며 본문이 잘리는 현상 방지 */
+.shell > :global(header) {
+  flex-shrink: 0;
+}
+
+.shell > :global(aside[role='status']) {
+  flex-shrink: 0;
+}
+
 .main {
-  padding: 40px 0 80px;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* 세로는 이 영역만 스크롤 — 자식 .content에 overflow:hidden 주면 flex 압축 시 제목이 잘림 */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 공지 띠 ↔ 본문: margin 대신 padding (flex+margin 이슈 회피) */
+  padding-top: 24px;
+  box-sizing: border-box;
 }
 
 .content {
+  flex: 0 0 auto;
+  width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 32px 20px 88px;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .headline {
@@ -78,10 +118,11 @@
 
 @media (max-width: 560px) {
   .main {
-    padding: 32px 0 64px;
+    padding-top: 20px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .content {
-    padding: 0 12px;
+    padding: 28px 12px 80px;
   }
 }

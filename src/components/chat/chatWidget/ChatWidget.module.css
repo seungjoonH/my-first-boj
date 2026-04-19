@@ -71,6 +71,10 @@
 
 .sectionMeta {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 6px 12px;
   border-bottom: 1px solid var(--color-border);
   font-size: 12px;
@@ -79,6 +83,24 @@
   transform: translateY(6px);
   animation: sectionFadeIn 320ms ease-out forwards;
   animation-delay: 80ms;
+}
+
+.onlineCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.onlineDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
 }
 
 .sectionBody {

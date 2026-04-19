@@ -28,4 +28,5 @@ export type ChatInitResponse = {
 export type ChatSseEvent =
   | ({ type: 'message' } & ChatMessage & { salt: string })
   | { type: 'keyword'; value: string }
+  | { type: 'online'; count: number }
   | { type: 'ping' };

@@ -1,21 +1,20 @@
 import { load } from 'cheerio';
-import { Redis } from '@upstash/redis';
 import type { ResultColor, SearchMode, SearchStrategy, SubmissionResult, SseEvent } from '@/types/search';
-import { BOJ_BASE, BOJ_ID_REGEX, DEFAULT_SEARCH_STRATEGY, SEARCH_STRATEGY_CONFIG_KEY, SERVICE_END_MS } from '@/lib/constants';
+import { chatRedis as redis } from '@/lib/chatRedis';
+import {
+  BOJ_BASE,
+  BOJ_ID_REGEX,
+  DEFAULT_SEARCH_STRATEGY,
+  SEARCH_EXPLORE_MODE,
+  SEARCH_STRATEGY_CONFIG_KEY,
+  SERVICE_END_MS,
+} from '@/lib/constants';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0';
 const SECONDS_PER_MINUTE = 60;
 const MINUTES_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;
 const DAYS_PER_YEAR = 365;
-
-const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-      })
-    : null;
 
 function trackSearch() {
   void redis?.incr('search_count').catch((error) => {
@@ -297,15 +296,21 @@ async function clearCheckpoint(userId: string, mode: SearchMode): Promise<void> 
 }
 
 function resolveSearchBounds(latestId: number, checkpoint: SearchCheckpoint | null, maxSteps: number): SearchBounds {
-  if (!checkpoint || checkpoint.latestId !== latestId) {
+  const fresh = (): SearchBounds => {
     const lo = Math.min(SEARCH_START_SUBMISSION_ID, latestId);
     return { latestId, lo, hi: latestId, iteration: 0 };
-  }
+  };
+
+  if (!checkpoint || checkpoint.latestId !== latestId) return fresh();
+
+  // Checkpoint was saved with a different strategy (e.g. binary→ternary) that has
+  // fewer maxSteps. Clamping iteration to maxSteps would cause the loop to exit
+  // immediately with unconverged bounds → spurious empty result.
+  if (checkpoint.iteration >= maxSteps) return fresh();
 
   const lo = Math.max(1, Math.min(checkpoint.lo, latestId));
   const hi = Math.max(lo, Math.min(checkpoint.hi, latestId));
-  const iteration = Math.max(0, Math.min(checkpoint.iteration, maxSteps));
-  return { latestId, lo, hi, iteration };
+  return { latestId, lo, hi, iteration: checkpoint.iteration };
 }
 
 async function saveSearchBounds(userId: string, mode: SearchMode, bounds: SearchBounds): Promise<void> {
@@ -419,6 +424,21 @@ export async function POST(req: Request): Promise<Response> {
     return createSseResponse([
       { type: 'progress', percent: 100 },
       { type: 'result', ...cachedResult },
+    ]);
+  }
+
+  /* redis_only: BOJ로 나가는 fetch 전부 금지 — Redis 캐시 히트만 위에서 처리 */
+  if (SEARCH_EXPLORE_MODE === 'redis_only') {
+    if (!redis) {
+      return createSseResponse([
+        {
+          type: 'error',
+          message: 'Redis에 연결할 수 없어 제출 기록 탐색을 시작할 수 없습니다.',
+        },
+      ]);
+    }
+    return createSseResponse([
+      { type: 'error', message: '해당 서비스를 사용할 수 없습니다.' },
     ]);
   }
 

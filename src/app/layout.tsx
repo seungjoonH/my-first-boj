@@ -66,7 +66,9 @@ export default function RootLayout({
         <meta name="google-site-verification" content="Sy_sI7sR96vgzPEqnKe_LsC6flFNNqgakN8EEH0owkg" />
       </head>
       <body>
-        {children}
+        <div className="appShell">
+          {children}
+        </div>
         <VersionBadge />
         <ChatRoot />
         <Analytics />

@@ -48,6 +48,7 @@ export function ChatRoot() {
     nickCooldownRemaining,
     nickCooldownTtlSec,
     warnCount,
+    onlineCount,
     sendCooldownRemainingMs,
     sendCooldownRemainingSec,
     sendCooldownRatio,
@@ -192,6 +193,7 @@ export function ChatRoot() {
           nickCooldownRemaining={nickCooldownRemaining}
           nickCooldownTtlSec={nickCooldownTtlSec}
           warnCount={warnCount}
+          onlineCount={onlineCount}
           keywordMentionCount={mentionCount}
           highlightedKeywordBubbleId={highlightedKeywordBubbleId}
           jumpTargetBubbleId={jumpTargetBubbleId}

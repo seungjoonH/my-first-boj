@@ -19,6 +19,7 @@ export function ChatWidget({
   sendCooldownRemainingSec,
   sendCooldownRatio,
   warnCount,
+  onlineCount,
   isLoaded,
   isClosing,
   onSend,
@@ -64,9 +65,17 @@ export function ChatWidget({
         </div>
       </div>
       <div className={styles.sectionMeta}>
-        {keywordMentionCount > 0 
-          ? <>대화에서 백준이 <strong>{keywordMentionCount.toLocaleString()}</strong>번 언급되었습니다</>
-          : '메시지를 보내어 이스터에그를 찾아보세요'}
+        <span>
+          {keywordMentionCount > 0
+            ? <>대화에서 백준이 <strong>{keywordMentionCount.toLocaleString()}</strong>번 언급되었습니다</>
+            : '메시지를 보내어 이스터에그를 찾아보세요'}
+        </span>
+        {onlineCount && (
+          <span className={styles.onlineCount}>
+            <span className={styles.onlineDot} aria-hidden />
+            {onlineCount.toLocaleString()}명
+          </span>
+        )}
       </div>
  
       {isLoaded ? (
