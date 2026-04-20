@@ -300,10 +300,11 @@ export function useChat(isOpen: boolean, onClose: () => void) {
       while (!cancelled) {
         const controller = new AbortController();
         abortRef.current = controller;
+        const streamConnectionId = crypto.randomUUID();
 
         try {
           const res = await fetch(
-            `/api/chat/stream?since=${since}&lastKwIdx=${lastKwIdx}`,
+            `/api/chat/stream?since=${since}&lastKwIdx=${lastKwIdx}&cid=${streamConnectionId}`,
             { signal: controller.signal },
           );
 

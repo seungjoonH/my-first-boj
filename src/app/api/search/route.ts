@@ -9,6 +9,12 @@ import {
   SEARCH_STRATEGY_CONFIG_KEY,
   SERVICE_END_MS,
 } from '@/lib/constants';
+import type { BojSearchSlotReleaseKind } from '@/lib/searchConcurrency';
+import {
+  releaseBojSearchSlot,
+  resetSearchFailureCount,
+  tryAcquireBojSearchSlot,
+} from '@/lib/searchConcurrency';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0';
 const SECONDS_PER_MINUTE = 60;
@@ -457,6 +463,13 @@ export async function POST(req: Request): Promise<Response> {
     return createSseResponse([{ type: 'ended' }]);
   }
 
+  const conc = await tryAcquireBojSearchSlot(redis, uuid);
+  if (!conc.granted) {
+    return createSseResponse([{ type: 'concurrency_limit', failureCount: conc.failureCount }]);
+  }
+
+  const slotReleaseKind: BojSearchSlotReleaseKind = conc.releaseKind;
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -465,6 +478,7 @@ export async function POST(req: Request): Promise<Response> {
       }
 
       async function clearAndSendEmpty(): Promise<void> {
+        await resetSearchFailureCount(redis, uuid);
         await clearCheckpoint(searchUserId, mode);
         send({ type: 'empty' });
       }
@@ -472,6 +486,7 @@ export async function POST(req: Request): Promise<Response> {
       async function sendResult(result: SubmissionResult): Promise<void> {
         await saveRelatedResultCaches(searchUserId, mode, result);
         await clearCheckpoint(searchUserId, mode);
+        await resetSearchFailureCount(redis, uuid);
         trackSearch();
         send({ type: 'result', ...result });
       }
@@ -542,6 +557,9 @@ export async function POST(req: Request): Promise<Response> {
         const isTimeoutError = isAbortError || message.includes('초과');
         console.error('[search] request failed', { userId: searchUserId, mode, message, isAbortError, isTimeoutError });
         send({ type: 'error', message: isTimeoutError || message.includes('BOJ') ? '잠시 후 다시 시도해주세요' : message });
+      }
+      finally {
+        await releaseBojSearchSlot(redis, slotReleaseKind);
       }
 
       controller.close();

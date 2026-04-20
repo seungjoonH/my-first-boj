@@ -7,6 +7,7 @@ import { parseKeywordValue } from '@/lib/chatKeyword';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
+const ONLINE_STALE_MS = SSE_HEARTBEAT_MS * 2;
 
 function sleepAbortable(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -29,18 +30,37 @@ function isVisibleMessage(message: ChatMessage, viewerUuid: string | null): bool
   return false;
 }
 
+function getConnectionMember(viewerUuid: string | null, cid: string | null): string | null {
+  if (!cid) return null;
+  if (!viewerUuid) return `anon:${cid}`;
+  return `${viewerUuid}:${cid}`;
+}
+
+async function touchOnline(member: string | null): Promise<number> {
+  if (!chatRedis || !member) return 0;
+  const now = Date.now();
+  const staleBefore = now - ONLINE_STALE_MS;
+  await Promise.all([
+    chatRedis.zadd(onlineSetKey(), { score: now, member }),
+    chatRedis.zremrangebyscore(onlineSetKey(), 0, staleBefore),
+  ]);
+  return Number(await chatRedis.zcard(onlineSetKey()) ?? 0);
+}
+
+async function removeOnline(member: string | null): Promise<void> {
+  if (!chatRedis || !member) return;
+  await chatRedis.zrem(onlineSetKey(), member);
+}
+
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const since = Number(url.searchParams.get('since') ?? '0');
   const lastKwIdx = Number(url.searchParams.get('lastKwIdx') ?? '0');
   const viewerUuid = getUuid(req);
+  const connectionId = url.searchParams.get('cid')?.trim() ?? null;
+  const onlineMember = getConnectionMember(viewerUuid, connectionId);
 
   const encoder = new TextEncoder();
-
-  // 접속 시 online set에 추가
-  if (viewerUuid) {
-    await chatRedis?.sadd(onlineSetKey(), viewerUuid).catch(() => {});
-  }
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -53,10 +73,22 @@ export async function GET(req: Request): Promise<Response> {
         }
       }
 
+      let lastOnlineCount = -1;
+      async function refreshOnlineCount(): Promise<void> {
+        try {
+          const count = await touchOnline(onlineMember);
+          if (count === lastOnlineCount) return;
+          send({ type: 'online', count });
+          lastOnlineCount = count;
+        }
+        catch {
+          send({ type: 'ping' });
+        }
+      }
+
       // 연결 직후 현재 접속자 수 전송
       try {
-        const count = Number(await chatRedis?.scard(onlineSetKey()) ?? 0);
-        send({ type: 'online', count });
+        await refreshOnlineCount();
       }
       catch { /* ignore */ }
 
@@ -114,14 +146,10 @@ export async function GET(req: Request): Promise<Response> {
               }
             }
 
+            await refreshOnlineCount();
+
             if (Date.now() - lastHeartbeat > SSE_HEARTBEAT_MS) {
-              try {
-                const count = Number(await chatRedis?.scard(onlineSetKey()) ?? 0);
-                send({ type: 'online', count });
-              }
-              catch {
-                send({ type: 'ping' });
-              }
+              send({ type: 'ping' });
               lastHeartbeat = Date.now();
             }
           }
@@ -132,9 +160,7 @@ export async function GET(req: Request): Promise<Response> {
         }
       }
       finally {
-        if (viewerUuid) {
-          await chatRedis?.srem(onlineSetKey(), viewerUuid).catch(() => {});
-        }
+        await removeOnline(onlineMember).catch(() => {});
         try {
           controller.close();
         }

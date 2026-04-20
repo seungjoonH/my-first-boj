@@ -145,7 +145,7 @@ export function SearchNotice0419({ hideStrip = false, externalOpen = false, onEx
             가 게시되었습니다.
           </p>
           <p className={styles.intro}>
-            이에 따라 이 서비스의 동작 방식과 새 버전(v1.1.1)에서 달라진 점을 함께 안내합니다.{' '}
+            이에 따라 이 서비스의 동작 방식과 새 버전(v1.1.4)에서 달라진 점을 함께 안내합니다.{' '}
             <strong className={styles.introEndDate}>{formatServiceEndDateKo(SERVICE_END_MS)}</strong>
             까지 백준 온라인 저지 서비스에 무리가 가지 않도록 최선을 다하겠습니다.
           </p>
@@ -170,30 +170,32 @@ export function SearchNotice0419({ hideStrip = false, externalOpen = false, onEx
                 </p>
               </li>
               <li>
+                <span className={styles.itemHeading}>재검색 제한</span>
+                <p className={styles.itemBody}>
+                  같은 브라우저에서 같은 검색 모드로는 <strong>30초에 한 번만</strong> 새 검색을 시작할 수 있도록
+                  제한을 두었습니다.
+                </p>
+              </li>
+              <li>
                 <span className={styles.itemHeading}>요청 간격</span>
                 <p className={styles.itemBody}>
                   짧은 시간에 요청을 연달아 보내지 않습니다. 한 요청에 대한 응답을 받은 뒤, 그다음 요청을 보내기 전에{' '}
-                  <strong>약 100ms~300ms</strong> 정도의 무작위 간격을 두어 요청의 부하를 줄였습니다.
+                  <strong>약 350ms~750ms</strong> 정도의 무작위 간격을 두어 BOJ로 나가는 요청의 부하를 줄입니다.
                 </p>
               </li>
             </ol>
           </div>
 
           <div className={styles.updateBlock}>
-            <p className={styles.updateBlockTitle}>신규 적용 (v1.1.1)</p>
+            <p className={styles.updateBlockTitle}>신규 적용 (v1.1.4)</p>
             <ol className={styles.numberedListUpdate}>
               <li>
-                <span className={styles.itemHeading}>요청 간격 상향</span>
+                <span className={styles.itemHeading}>동시 탐색 상한</span>
                 <p className={styles.itemBody}>
-                  부하 완화를 위해, 응답을 받은 뒤 다음 요청까지 두는 간격을 <strong>350ms~750ms</strong> 수준으로
-                  늘렸습니다. 이에 따라 탐색 속도가 다소 느려질 수 있습니다.
-                </p>
-              </li>
-              <li>
-                <span className={styles.itemHeading}>재검색 제한</span>
-                <p className={styles.itemBody}>
-                  같은 브라우저에서 같은 검색 모드로는 <strong>30초에 한 번만</strong> 새 검색을 시작할 수 있도록
-                  제한을 두었습니다. 너른 양해 부탁드립니다.
+                  서버 부하를 고려해 <strong>한 번에 처리할 수 있는 탐색 인원에 제한</strong>을 두었습니다.{' '}
+                  동시 접속 가능 인원을 초과하여 진행이 되지 않을 경우,{' '}
+                  <strong>잠시 후 다시 시도해 주세요</strong>. 해당 제한 수치는 서버 상황에 따라 유동적으로
+                  변경될 수 있습니다.
                 </p>
               </li>
             </ol>

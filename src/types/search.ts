@@ -25,4 +25,5 @@ export type SseEvent =
   | { type: 'empty' }
   | { type: 'ended' }
   | { type: 'error'; message: string }
-  | { type: 'rate_limit'; remainingSeconds: number };
+  | { type: 'rate_limit'; remainingSeconds: number }
+  | { type: 'concurrency_limit'; failureCount: number };

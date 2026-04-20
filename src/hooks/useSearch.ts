@@ -2,7 +2,10 @@
 
 import { useCallback, useRef, useState } from 'react';
 import type { SearchMode, SubmissionResult, SseEvent } from '@/types/search';
-import { SEARCH_EXPLORE_MODE } from '@/lib/constants';
+import {
+  SEARCH_CONCURRENCY_RETRY_NOTICE_THRESHOLD,
+  SEARCH_EXPLORE_MODE,
+} from '@/lib/constants';
 import { loadCache, saveCache } from '@/lib/cache';
 import { saveProgress, clearProgress } from '@/lib/searchProgress';
 
@@ -194,6 +197,17 @@ export function useSearch(
                 setState('idle');
                 onError(`${event.remainingSeconds}초 후에 다시 시도해주세요`);
                 break;
+
+              case 'concurrency_limit': {
+                clearFakeTicker();
+                setState('idle');
+                const busy =
+                  event.failureCount >= SEARCH_CONCURRENCY_RETRY_NOTICE_THRESHOLD
+                    ? '여전히 요청이 많아 처리가 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
+                    : '현재 요청이 많아 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+                onError(busy);
+                break;
+              }
 
               case 'error':
                 clearFakeTicker();

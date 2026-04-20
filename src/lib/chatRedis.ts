@@ -39,7 +39,7 @@ export function userBanSetKey(): string {
 }
 
 export function onlineSetKey(): string {
-  return 'chat:online';
+  return 'chat:online:conn';
 }
 
 export function msgRlKey(scopeKey: string): string {
