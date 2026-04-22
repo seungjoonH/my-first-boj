@@ -10,7 +10,7 @@ export const NICK_RL_TTL_SEC = 86400;
 /** Redis 전역 설정 키 — 값이 없으면 `NICK_RL_TTL_SEC` 사용 */
 export const NICK_RL_TTL_CONFIG_KEY = 'chat:config:nick_rl_ttl_sec';
 
-export const SSE_POLL_BASE_MS = 4000;
+export const SSE_POLL_BASE_MS = 6000;
 export const SSE_POLL_MAX_MS = 10000;
 export const SSE_BACKOFF_THRESHOLD = 5;
 export const SSE_HEARTBEAT_MS = 30000;

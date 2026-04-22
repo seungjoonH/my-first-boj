@@ -43,32 +43,6 @@
   min-height: 40px;
 }
 
-.closeButton {
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  align-self: center;
-}
-
-.closeIcon {
-  display: block;
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
-.closeButton:hover {
-  color: var(--color-text);
-  border-color: var(--color-text);
-}
-
 .sectionMeta {
   flex: 0 0 auto;
   display: flex;

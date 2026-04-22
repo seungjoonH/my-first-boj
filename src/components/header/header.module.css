@@ -15,6 +15,9 @@
 
 .actions {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .logoIcon {
@@ -28,30 +31,4 @@
   font-weight: 600;
   color: var(--color-text);
   letter-spacing: -0.01em;
-}
-
-.menuButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  padding: 6px;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.menuButton:hover {
-  border-color: var(--color-text);
-}
-
-.menuButton:hover .menuIcon {
-  filter: brightness(0) saturate(0);
-}
-
-.menuIcon {
-  display: block;
-  flex-shrink: 0;
 }

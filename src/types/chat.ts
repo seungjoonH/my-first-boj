@@ -3,6 +3,7 @@ export type ChatMessage = {
   clientUuid: string;
   message: string;
   timestamp: number;
+  replyToMessageId?: string;
   banned?: boolean;
   isAdmin?: boolean;
   isDm?: boolean;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { generateNickname, getFinalChatTier } from '@/lib/chatNickname';
 import { B_BADGE_VARIANT_MAP, KEYWORD_ID_PREFIX } from '@/lib/chatConstants';
 import { KEYWORD_REGEX } from '@/lib/chatKeyword';
@@ -15,6 +15,8 @@ const AT_BOTTOM_THRESHOLD_PX = 40;
 const BUBBLE_SHAKE_DURATION_MS = 520;
 const SCROLL_SETTLE_DELAY_MS = 110;
 const SCROLL_SETTLE_FORCE_MS = 1200;
+const REPLY_LONG_PRESS_MS = 450;
+const LONG_PRESS_MOVE_THRESHOLD_PX = 10;
 
 const KST_TIME_ZONE = 'Asia/Seoul';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -109,9 +111,12 @@ export function MessageList({
   saltMap,
   myUuid,
   adminUuid,
+  selectedReplyMessageId,
   highlightedKeywordBubbleId,
   jumpTargetBubbleId,
   jumpRequestKey,
+  onReplyToMessage,
+  onJumpToMessage,
   onInteraction,
   onKeywordHover,
 }: MessageListProps) {
@@ -121,11 +126,31 @@ export function MessageList({
   const scrollSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollSettleForceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearScrollWatcherRef = useRef<(() => void) | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartPointRef = useRef<{ x: number; y: number } | null>(null);
+  const didLongPressRef = useRef(false);
   const onInteractionRef = useRef(onInteraction);
   const prevMessageIdsRef = useRef<Set<string>>(new Set(messages.map((m) => m.id)));
   const initialSyncDoneRef = useRef(false);
   const [newMsgCount, setNewMsgCount] = useState(0);
   const [shakenBubbleId, setShakenBubbleId] = useState<string | null>(null);
+  const [activeReplyBubbleId, setActiveReplyBubbleId] = useState<string | null>(null);
+  const visibleMessageById = useMemo(
+    () => Object.fromEntries(messages.map((message) => [message.id, message])),
+    [messages],
+  );
+
+  const clearLongPressTimer = (): void => {
+    if (!longPressTimerRef.current) return;
+    clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = null;
+  };
+
+  const resetLongPressState = (): void => {
+    clearLongPressTimer();
+    touchStartPointRef.current = null;
+    didLongPressRef.current = false;
+  };
 
   const isAtBottom = (): boolean => {
     const el = rootRef.current;
@@ -158,6 +183,7 @@ export function MessageList({
       if (scrollSettleForceTimerRef.current) clearTimeout(scrollSettleForceTimerRef.current);
       clearScrollWatcherRef.current?.();
       clearScrollWatcherRef.current = null;
+      resetLongPressState();
     };
   }, []);
 
@@ -244,7 +270,55 @@ export function MessageList({
 
   const handleScroll = (): void => {
     onInteraction();
+    resetLongPressState();
+    setActiveReplyBubbleId(null);
     if (isAtBottom()) setNewMsgCount(0);
+  };
+
+  const handleRowMouseEnter = (bubbleId: string, canReply: boolean): void => {
+    if (!canReply) return;
+    setActiveReplyBubbleId(bubbleId);
+  };
+
+  const handleRowMouseLeave = (bubbleId: string): void => {
+    setActiveReplyBubbleId((prev) => (prev === bubbleId ? null : prev));
+  };
+
+  const handleRowPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    bubbleId: string,
+    canReply: boolean,
+  ): void => {
+    if (e.pointerType === 'mouse') return;
+    if (!canReply) return;
+    onInteraction();
+    resetLongPressState();
+    touchStartPointRef.current = { x: e.clientX, y: e.clientY };
+    longPressTimerRef.current = setTimeout(() => {
+      didLongPressRef.current = true;
+      setActiveReplyBubbleId(bubbleId);
+    }, REPLY_LONG_PRESS_MS);
+  };
+
+  const handleRowPointerMove = (e: React.PointerEvent<HTMLDivElement>): void => {
+    if (!touchStartPointRef.current) return;
+    const deltaX = e.clientX - touchStartPointRef.current.x;
+    const deltaY = e.clientY - touchStartPointRef.current.y;
+    const movedDistance = Math.hypot(deltaX, deltaY);
+    if (movedDistance <= LONG_PRESS_MOVE_THRESHOLD_PX) return;
+    resetLongPressState();
+  };
+
+  const handleRowPointerUp = (e: React.PointerEvent<HTMLDivElement>): void => {
+    clearLongPressTimer();
+    touchStartPointRef.current = null;
+    if (!didLongPressRef.current) return;
+    e.preventDefault();
+    didLongPressRef.current = false;
+  };
+
+  const handleRowPointerCancel = (): void => {
+    resetLongPressState();
   };
 
   return (
@@ -252,12 +326,16 @@ export function MessageList({
       ref={rootRef}
       className={styles.root}
       onScroll={handleScroll}
-      onMouseLeave={() => onKeywordHover(null)}
+      onMouseLeave={() => {
+        onKeywordHover(null);
+        setActiveReplyBubbleId(null);
+      }}
     >
       {messages.map((msg, index) => {
         const isAdmin = msg.isAdmin === true;
         const isMine = !isAdmin && msg.clientUuid === myUuid;
         const isDm = msg.isDm === true;
+        const canReply = !msg.banned && !isDm;
         const prevMsg = index > 0 ? messages[index - 1] : null;
         const isSameSenderAsPrev = prevMsg?.clientUuid === msg.clientUuid;
         const isFirstMessageOfDay =
@@ -277,9 +355,20 @@ export function MessageList({
           styles.bubble,
           isAdmin ? styles['bubble--admin'] : (isMine ? styles['bubble--mine'] : styles['bubble--theirs']),
           isDm && styles['bubble--dm'],
+          selectedReplyMessageId === msg.id && styles['bubble--replySelected'],
           shakenBubbleId === msg.id && styles['bubble--shake'],
           msg.banned && styles['bubble--banned'],
         );
+        const shouldShowReplyAction = activeReplyBubbleId === msg.id && canReply;
+        const replyActionCls = buildCls(
+          styles.replyActionButton,
+          shouldShowReplyAction && styles['replyActionButton--visible'],
+        );
+        const replyTargetMessage = msg.replyToMessageId
+          ? (visibleMessageById[msg.replyToMessageId] ?? null)
+          : null;
+        const shouldRenderReplyPreview = Boolean(replyTargetMessage && !replyTargetMessage.banned);
+        const replyPreviewText = shouldRenderReplyPreview ? (replyTargetMessage?.message ?? '') : '';
         const bubbleLineCls = buildCls(
           styles.bubbleLine,
           isMine ? styles['bubbleLine--mine'] : styles['bubbleLine--theirs'],
@@ -288,7 +377,22 @@ export function MessageList({
         const timeText = formatMessageTime(msg.timestamp);
 
         return (
-          <div key={msg.id} className={rowCls}>
+          <div
+            key={msg.id}
+            className={rowCls}
+            onMouseEnter={() => {
+              handleRowMouseEnter(msg.id, canReply);
+            }}
+            onMouseLeave={() => {
+              handleRowMouseLeave(msg.id);
+            }}
+            onPointerDown={(e) => {
+              handleRowPointerDown(e, msg.id, canReply);
+            }}
+            onPointerMove={handleRowPointerMove}
+            onPointerUp={handleRowPointerUp}
+            onPointerCancel={handleRowPointerCancel}
+          >
             {isFirstMessageOfDay && (
               <div className={styles.dateMarker}>
                 {formatDateMarker(msg.timestamp)}
@@ -314,6 +418,19 @@ export function MessageList({
                   bubbleRefs.current[msg.id] = el;
                 }}
               >
+                {shouldRenderReplyPreview && (
+                  <button
+                    type="button"
+                    className={styles.replyPreview}
+                    onClick={() => {
+                      if (!replyTargetMessage) return;
+                      onJumpToMessage(replyTargetMessage.id);
+                    }}
+                  >
+                    <span className={styles.replyPreviewLabel}>답장</span>
+                    <span className={styles.replyPreviewText}>{replyPreviewText}</span>
+                  </button>
+                )}
                 {msg.banned
                   ? <span className={styles.bannedText}>삭제된 메시지</span>
                   : (
@@ -330,6 +447,18 @@ export function MessageList({
                       </>
                     )
                 }
+                {canReply && (
+                  <button
+                    type="button"
+                    className={replyActionCls}
+                    aria-label="이 메시지에 답장"
+                    onClick={() => {
+                      onReplyToMessage(msg.id);
+                    }}
+                  >
+                    ↪
+                  </button>
+                )}
               </div>
               <span className={timeCls}>{timeText}</span>
             </div>

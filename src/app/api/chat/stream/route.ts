@@ -62,6 +62,11 @@ export async function GET(req: Request): Promise<Response> {
 
   const encoder = new TextEncoder();
 
+  // req.signal 만으로는 클라이언트가 fetch를 abort했을 때 즉시 발화하지 않는 경우가 있어
+  // ReadableStream cancel() 콜백을 통해 내부 abort를 보장한다.
+  const streamAbort = new AbortController();
+  req.signal.addEventListener('abort', () => streamAbort.abort(), { once: true });
+
   const stream = new ReadableStream({
     async start(controller) {
       function send(event: ChatSseEvent): void {
@@ -98,7 +103,7 @@ export async function GET(req: Request): Promise<Response> {
       let lastHeartbeat = Date.now();
 
       try {
-        while (!req.signal.aborted) {
+        while (!streamAbort.signal.aborted) {
           try {
             const [rawMsgs, rawKws] = await Promise.all([
               chatRedis?.lrange(msgKey(), 0, CHAT_MESSAGES_REDIS_MAX - 1) ?? [],
@@ -156,7 +161,7 @@ export async function GET(req: Request): Promise<Response> {
           catch {
             pollMs = SSE_POLL_BASE_MS;
           }
-          await sleepAbortable(pollMs, req.signal);
+          await sleepAbortable(pollMs, streamAbort.signal);
         }
       }
       finally {
@@ -168,6 +173,10 @@ export async function GET(req: Request): Promise<Response> {
           // no-op
         }
       }
+    },
+    cancel() {
+      // 클라이언트가 스트림을 끊으면 루프를 즉시 중단해 removeOnline 이 확실히 실행되게 한다
+      streamAbort.abort();
     },
   });
 

@@ -141,7 +141,12 @@ export function parseMsg(raw: unknown): ChatMessage | null {
       typeof parsed.message === 'string' &&
       typeof parsed.timestamp === 'number'
     ) {
-      return parsed;
+      const hasNoReplyTarget = parsed.replyToMessageId === undefined;
+      const hasValidReplyTarget = typeof parsed.replyToMessageId === 'string';
+      if (hasNoReplyTarget || hasValidReplyTarget) return parsed;
+      const { replyToMessageId, ...rest } = parsed;
+      void replyToMessageId;
+      return rest;
     }
     return null;
   }

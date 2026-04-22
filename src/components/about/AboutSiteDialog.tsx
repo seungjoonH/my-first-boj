@@ -1,29 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { CloseButton } from '@/components/closeButton/CloseButton';
+import { IconButton } from '@/components/iconButton/IconButton';
 import styles from './AboutSiteDialog.module.css';
 
 const CONTACT_EMAIL = 'hsj6831@gmail.com';
 const BOJ_HOME_URL = 'https://www.acmicpc.net/';
 const BOJ_SERVICE_END_NEWS_URL = 'https://www.acmicpc.net/board/view/165799';
-
-function IconAboutAlert(props: { className?: string }) {
-  return (
-    <svg
-      className={props.className}
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.75" />
-      <path
-        fill="currentColor"
-        d="M12 7.25a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Zm-0.6 4.3h1.2v5.5h-1.2v-5.5Z"
-      />
-    </svg>
-  );
-}
 
 function IconCopy(props: { className?: string }) {
   return (
@@ -92,17 +76,15 @@ export function AboutSiteDialog() {
 
   return (
     <>
-      <button
-        type="button"
-        className={styles.trigger}
+      <IconButton
+        variant="about"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls="about-site-dialog"
         title="이 사이트 소개"
-      >
-        <IconAboutAlert className={styles.triggerIcon} />
-      </button>
+        aria-label="이 사이트 소개"
+      />
 
       <dialog
         id="about-site-dialog"
@@ -114,22 +96,7 @@ export function AboutSiteDialog() {
       >
         <div className={styles.inner}>
           <div className={styles.headRow}>
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={handleClose}
-              aria-label="닫기"
-            >
-              <svg className={styles.closeIcon} viewBox="0 0 24 24" aria-hidden>
-                <path
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  d="M7 7l10 10M17 7L7 17"
-                />
-              </svg>
-            </button>
+            <CloseButton type="button" onClick={handleClose} aria-label="닫기" />
           </div>
 
           <div>

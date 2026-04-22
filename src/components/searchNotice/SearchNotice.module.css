@@ -113,35 +113,6 @@
   box-sizing: border-box;
 }
 
-.closeBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg, #fff);
-  cursor: pointer;
-  color: var(--color-muted);
-  border-radius: 0;
-  flex-shrink: 0;
-}
-
-.closeBtn:hover {
-  border-color: var(--color-text);
-  color: var(--color-text);
-}
-
-.closeIcon {
-  display: block;
-  width: 16px;
-  height: 16px;
-}
-
 .title {
   flex: 1;
   min-width: 0;

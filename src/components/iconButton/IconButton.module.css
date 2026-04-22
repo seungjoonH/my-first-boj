@@ -1,0 +1,61 @@
+/* 헤더 액션: 32×32 버튼, 내부는 mask + --icon-btn-glyph */
+.btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.icon {
+  --icon-btn-glyph: 18px;
+  display: block;
+  width: var(--icon-btn-glyph);
+  min-width: var(--icon-btn-glyph);
+  height: var(--icon-btn-glyph);
+  min-height: var(--icon-btn-glyph);
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: var(--icon-btn-glyph) var(--icon-btn-glyph);
+  mask-size: var(--icon-btn-glyph) var(--icon-btn-glyph);
+  pointer-events: none;
+}
+
+.icon--about {
+  -webkit-mask-image: url("/icons/about.svg");
+  mask-image: url("/icons/about.svg");
+}
+
+.icon--history {
+  -webkit-mask-image: url("/icons/history-outlined.svg");
+  mask-image: url("/icons/history-outlined.svg");
+}
+
+.icon--close {
+  -webkit-mask-image: url("/icons/close.svg");
+  mask-image: url("/icons/close.svg");
+}
+
+.icon--notice {
+  -webkit-mask-image: url("/icons/bell.svg");
+  mask-image: url("/icons/bell.svg");
+}

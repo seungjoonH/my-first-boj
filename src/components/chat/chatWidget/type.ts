@@ -18,9 +18,10 @@ export type ChatWidgetProps = {
   onlineCount: number | null;
   isLoaded: boolean;
   isClosing: boolean;
-  onSend: (text: string) => void;
+  onSend: (text: string, replyToMessageId?: string) => void;
   onChangeNickname: () => void;
   onClose: () => void;
   onInteraction: () => void;
+  onJumpToMessage: (messageId: string) => void;
   onKeywordHover: (keyword: string | null) => void;
 };

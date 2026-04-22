@@ -131,6 +131,12 @@ export function ChatRoot() {
     updateLastInteraction();
   };
 
+  const handleJumpToMessage = (messageId: string): void => {
+    setJumpTargetBubbleId((prev) => (prev === messageId ? prev : messageId));
+    setJumpRequestKey((prev) => prev + 1);
+    updateLastInteraction();
+  };
+
   const handleBackgroundKeywordClick = (keywordId: string): void => {
     const bubbleKeywordId = keywordToBubbleIdMap[keywordId];
     if (!bubbleKeywordId) return;
@@ -138,9 +144,7 @@ export function ChatRoot() {
     if (!messageId) return;
     setHoveredBackgroundKeywordId(null);
     setHoveredKeywordBubbleId(null);
-    setJumpTargetBubbleId((prev) => (prev === messageId ? prev : messageId));
-    setJumpRequestKey((prev) => prev + 1);
-    updateLastInteraction();
+    handleJumpToMessage(messageId);
   };
 
   const handleToggle = () => {
@@ -207,6 +211,7 @@ export function ChatRoot() {
           onChangeNickname={changeNickname}
           onClose={handleClose}
           onInteraction={updateLastInteraction}
+          onJumpToMessage={handleJumpToMessage}
           onKeywordHover={setHoveredKeywordBubbleId}
         />
       )}

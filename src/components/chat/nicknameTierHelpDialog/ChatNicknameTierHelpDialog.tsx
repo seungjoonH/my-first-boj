@@ -17,6 +17,7 @@ import {
   type ChatTier,
 } from '@/lib/chatNickname';
 import { buildCls } from '@/lib/buildCls';
+import { CloseButton } from '@/components/closeButton/CloseButton';
 import { NicknameChangeButton } from '../nicknameChangeButton/NicknameChangeButton';
 import { TierIcon } from '../tierIcon/TierIcon';
 import { NicknameBadgeBase } from '../nicknameBadge/NicknameBadge';
@@ -177,28 +178,7 @@ export function ChatNicknameTierHelpDialog({
           <h2 id="nickname-tier-help-title" className={styles.title}>
             닉네임 티어
           </h2>
-          <button
-            className={styles.closeButton}
-            type="button"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            <svg
-              className={styles.closeIcon}
-              viewBox="0 0 24 24"
-              width="24"
-              height="24"
-              aria-hidden
-            >
-              <path
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                d="M7 7l10 10M17 7L7 17"
-              />
-            </svg>
-          </button>
+          <CloseButton type="button" onClick={onClose} aria-label="닫기" />
         </div>
 
         <div className={styles.myNicknameSection}>
@@ -429,22 +409,7 @@ export function ChatNicknameTierHelpDialog({
                   ? `다이아 언어 슬롯 (${CHAT_DIAMOND_LANGUAGES.length})`
                   : `플래티넘 언어 슬롯 (${PLATINUM_SLOT_LANGUAGES.length})`}
               </h4>
-              <button
-                className={styles.langPanelClose}
-                type="button"
-                onClick={() => setOpenLangPanel(null)}
-                aria-label="목록 닫기"
-              >
-                <svg className={styles.langPanelCloseIcon} viewBox="0 0 24 24" width="16" height="16" aria-hidden>
-                  <path
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    d="M7 7l10 10M17 7L7 17"
-                  />
-                </svg>
-              </button>
+              <CloseButton type="button" onClick={() => setOpenLangPanel(null)} aria-label="목록 닫기" />
             </div>
             <ul className={styles.langPanelList}>
               {(openLangPanel === 'diamond' ? CHAT_DIAMOND_LANGUAGES : PLATINUM_SLOT_LANGUAGES).map((lang) => (

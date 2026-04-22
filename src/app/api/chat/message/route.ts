@@ -38,8 +38,8 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ ok: false, error: 'banned' });
   }
 
-  let body: { message?: unknown; messageId?: unknown };
-  try { body = (await req.json()) as { message?: unknown; messageId?: unknown }; }
+  let body: { message?: unknown; messageId?: unknown; replyToMessageId?: unknown };
+  try { body = (await req.json()) as { message?: unknown; messageId?: unknown; replyToMessageId?: unknown }; }
   catch { return Response.json({ ok: false, error: 'invalid body' }, { status: 400 }); }
 
   const message = typeof body.message === 'string' ? body.message.trim() : '';
@@ -52,6 +52,12 @@ export async function POST(req: Request): Promise<Response> {
 
   const messageIdRaw = typeof body.messageId === 'string' ? body.messageId.trim() : '';
   const messageId = messageIdRaw && messageIdRaw.length <= 64 ? messageIdRaw : crypto.randomUUID();
+  const replyToMessageIdRaw = typeof body.replyToMessageId === 'string' ? body.replyToMessageId.trim() : '';
+  const hasReplyTarget = replyToMessageIdRaw.length > 0;
+  if (hasReplyTarget && replyToMessageIdRaw.length > 64) {
+    return Response.json({ ok: false, error: 'invalid_reply_target' }, { status: 400 });
+  }
+  const replyToMessageId = hasReplyTarget ? replyToMessageIdRaw : undefined;
 
   if (chatRedis) {
     const idemKey = `chat:idem:msg:${uuid}:${messageId}`;
@@ -73,6 +79,7 @@ export async function POST(req: Request): Promise<Response> {
     clientUuid: uuid,
     message,
     timestamp: Date.now(),
+    replyToMessageId,
   });
 
   await chatRedis?.rpush(msgKey(), chatMessage);

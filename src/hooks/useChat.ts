@@ -526,7 +526,7 @@ export function useChat(isOpen: boolean, onClose: () => void) {
   }, [isOpen]);
 
   // ── 메시지 전송 ───────────────────────────────────────────────────────────────
-  const sendMessage = async (text: string): Promise<void> => {
+  const sendMessage = async (text: string, replyToMessageId?: string): Promise<void> => {
     if (!state.myUuid) return;
     if (sendingRef.current) return;
 
@@ -544,6 +544,7 @@ export function useChat(isOpen: boolean, onClose: () => void) {
       clientUuid: state.myUuid,
       message: trimmed,
       timestamp: Date.now(),
+      replyToMessageId,
     };
 
     setState((prev) => ({
@@ -559,7 +560,7 @@ export function useChat(isOpen: boolean, onClose: () => void) {
       const res = await fetch('/api/chat/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, messageId: optimistic.id }),
+        body: JSON.stringify({ message: trimmed, messageId: optimistic.id, replyToMessageId }),
       });
       const data = (await res.json()) as SendMessageResponse;
 
