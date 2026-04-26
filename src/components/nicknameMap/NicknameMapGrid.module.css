@@ -1,0 +1,361 @@
+.tableScroll {
+  overflow-x: auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  border-radius: 0;
+  --nick-map-data-row-px: 30px;
+}
+
+.table th,
+.table td {
+  border-radius: 0;
+}
+
+.thB {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  vertical-align: middle;
+  text-align: center;
+  padding: 2px 2px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  font-weight: 700;
+  min-width: 88px;
+  max-width: 120px;
+}
+
+.bHead {
+  display: block;
+  font-size: 9px;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  word-break: keep-all;
+}
+
+.ratio {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.thB--ac .bHead {
+  color: var(--result-ac);
+}
+
+.thB--wa .bHead {
+  color: var(--result-wa);
+}
+
+.thB--tle .bHead {
+  color: var(--result-tle);
+}
+
+.thB--ce .bHead {
+  color: var(--result-ce);
+}
+
+.thB--rte .bHead {
+  color: var(--result-rte);
+}
+
+.thB--muted .bHead {
+  color: var(--color-muted);
+}
+
+.thB--ac .ratio {
+  color: var(--result-ac);
+}
+
+.thB--wa .ratio {
+  color: var(--result-wa);
+}
+
+.thB--tle .ratio {
+  color: var(--result-tle);
+}
+
+.thB--ce .ratio {
+  color: var(--result-ce);
+}
+
+.thB--rte .ratio {
+  color: var(--result-rte);
+}
+
+.thB--muted .ratio {
+  color: var(--color-muted);
+}
+
+/* 상단 열 헤더: 비율 숫자만 회색, 뱃지 라벨은 열별 결과색 유지 */
+.table thead .thB .ratio {
+  color: var(--color-muted, #757575);
+  opacity: 1;
+}
+
+.sectionHeadRow {
+  background: #f3f4f6;
+}
+
+.sectionHeadCell {
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  vertical-align: middle;
+}
+
+.sectionToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-align: left;
+  color: var(--color-text);
+  background: #f3f4f6;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.sectionToggle:hover {
+  background: #e8eaee;
+}
+
+.sectionToggle--collapsed {
+  background: #eceef2;
+}
+
+.sectionChevron {
+  flex-shrink: 0;
+  font-size: 10px;
+  width: 1em;
+}
+
+.sectionTitle {
+  flex: 1;
+  min-width: 0;
+}
+
+.sectionTitleTierLang {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* 티어 SVG는 세로로 길어 1em도 행이 살짝 커짐 — 글자 캡 높이보다 한 단계 작게 */
+.sectionTitleTierIcon {
+  display: block;
+  flex-shrink: 0;
+  height: 0.82em;
+  width: auto;
+  object-fit: contain;
+}
+
+.sectionMeta {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+/* 지연 행: 실제 셀 전 가벼운 칸 (테이블 레이아웃 유지) */
+.lazyPlaceholderTd {
+  box-sizing: border-box;
+  height: var(--nick-map-data-row-px, 30px);
+  min-height: var(--nick-map-data-row-px, 30px);
+  max-height: var(--nick-map-data-row-px, 30px);
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  vertical-align: middle;
+  background: linear-gradient(180deg, #f0f1f4 0%, #e6e8ec 100%);
+}
+
+@keyframes nickMapRowLazyHydrate {
+  from {
+    transform: translateY(-5px);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+.rowLazyHydrated td {
+  animation: nickMapRowLazyHydrate 0.22s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowLazyHydrated td {
+    animation: none;
+  }
+}
+
+/* 펼친 안정: 데이터 행 높이를 항상 동일(px)로 고정 */
+.sectionRowOpenHeight {
+  max-height: var(--nick-map-data-row-px, 30px);
+  overflow: hidden;
+}
+
+.sectionRowOpenHeight > td {
+  box-sizing: border-box;
+  height: var(--nick-map-data-row-px, 30px);
+  min-height: var(--nick-map-data-row-px, 30px);
+  max-height: var(--nick-map-data-row-px, 30px);
+  overflow: hidden;
+}
+
+
+.sectionAnimRow {
+  overflow: hidden;
+  transition: max-height 0.36s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sectionAnimRow > td {
+  box-sizing: border-box;
+  transition: max-height 0.36s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sectionAnimRow.sectionAnimRowCollapsed {
+  max-height: 0;
+}
+
+.sectionAnimRow.sectionAnimRowCollapsed > td {
+  max-height: 0;
+  min-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+  overflow: hidden;
+}
+
+/* tr 보조 클래스 — TS에서 붙임, 높이는 `.sectionAnimRowExpanded.sectionRowStandin` */
+.sectionRowStandin {
+  box-sizing: border-box;
+}
+
+/* 실데이터·fade: 최소는 데이터 행, max는 카운트 뱃지 등 여유 */
+.sectionAnimRowExpanded {
+  max-height: var(--nick-map-data-row-px, 30px);
+}
+
+.sectionAnimRowExpanded:not(.sectionRowStandin) > td {
+  box-sizing: border-box;
+  height: var(--nick-map-data-row-px, 30px);
+  min-height: var(--nick-map-data-row-px, 30px);
+  max-height: var(--nick-map-data-row-px, 30px);
+  overflow: hidden;
+}
+
+/* 펼침 중 플레이스홀더만: 각 행 높이를 실제 셀과 동일 목표로 고정 → 펼침·fade 직후 점프 완화 */
+.sectionAnimRowExpanded.sectionRowStandin {
+  max-height: var(--nick-map-data-row-px, 30px);
+}
+
+.sectionAnimRowExpanded.sectionRowStandin > td {
+  min-height: var(--nick-map-data-row-px, 30px);
+  max-height: var(--nick-map-data-row-px, 30px);
+  overflow: hidden;
+}
+
+@keyframes nickMapSectionCellFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.sectionCellFadeIn {
+  animation: nickMapSectionCellFadeIn 0.28s ease-out forwards;
+}
+
+.sectionCellFadeOut {
+  opacity: 0;
+}
+
+.sectionAnimRow > td.sectionCellFadeOut {
+  min-height: 0 !important;
+  transition:
+    max-height 0.36s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.22s ease;
+}
+
+.sectionPlaceholderTight {
+  box-sizing: border-box;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  border-top-width: 0;
+  border-bottom-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sectionAnimRow,
+  .sectionAnimRow > td {
+    transition: none;
+  }
+
+  .sectionCellFadeIn {
+    animation: none;
+    opacity: 1;
+  }
+
+  .sectionAnimRow > td.sectionCellFadeOut {
+    transition: none;
+  }
+}
+
+/* 펼침 1·2단계: N행 분량 높이를 한 블록으로만 전환(테이블 tr max-height 한계 회피) */
+.sectionOpenShellRow {
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.sectionOpenShellCell {
+  padding: 0;
+  vertical-align: top;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
+
+.sectionOpenShellInner {
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: height 0.34s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: #fff;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(100% / 9 - 1px),
+    rgba(0, 0, 0, 0.06) calc(100% / 9 - 1px),
+    rgba(0, 0, 0, 0.06) calc(100% / 9)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sectionOpenShellInner {
+    transition: none;
+  }
+}

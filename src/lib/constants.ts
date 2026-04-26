@@ -3,13 +3,16 @@ export const SERVICE_END_MS = new Date('2026-04-28T00:00:00+09:00').getTime();
 /** 게시판 공지 게시 시각 (KST) — 상대 시간 표기 기준 */
 export const BOJ_SCRAPING_NOTICE_POSTED_AT_MS = new Date('2026-04-19T16:55:05+09:00').getTime();
 
+/** 탐색 전략 개선 공지 — 상대 시간·레지스트리 sortKey 기준 (KST, 참고 글 시각에 맞춤) */
+export const SEARCH_STRATEGY_UPDATE_NOTICE_POSTED_AT_MS = new Date('2026-04-26T21:45:33+09:00').getTime();
+
 export const BOJ_BASE = 'https://www.acmicpc.net';
 
 /** 영문자·숫자·언더스코어, 1~99자 */
 export const BOJ_ID_REGEX = /^[a-zA-Z0-9_]{1,99}$/;
 
 export const SEARCH_STRATEGY_CONFIG_KEY = 'search:strategy';
-export const DEFAULT_SEARCH_STRATEGY: 'binary' | 'ternary' = 'binary';
+export const DEFAULT_SEARCH_STRATEGY: 'binary' | 'ternary' | 'top1_prev' = 'top1_prev';
 
 /** [docs/search-concurrency.md] BOJ 동시 탐색 — 코드 기본값 */
 export const SEARCH_BOJ_GENERAL_SLOTS = 2;

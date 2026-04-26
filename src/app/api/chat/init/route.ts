@@ -1,4 +1,6 @@
 import {
+  addNickUnlockedCell,
+  batchGetEffectiveSalts,
   chatRedis,
   getOrCreateSalt,
   msgKey,
@@ -10,9 +12,11 @@ import {
   getUserWarnCount,
   parseMsg,
   getNickRlTtlSec,
+  incrNickTableVersion,
 } from '@/lib/chatRedis';
 import { CHAT_MESSAGES_REDIS_MAX } from '@/lib/chatConstants';
-import { getAdminUuid } from '@/lib/chatAdmin';
+import { getAdminUuid, isReservedChatUuid } from '@/lib/chatAdmin';
+import { computeNicknameGridCoords } from '@/lib/chatNickname';
 import type { ChatInitResponse, ChatMessage } from '@/types/chat';
 import { parseKeywordValue } from '@/lib/chatKeyword';
 import {
@@ -45,8 +49,15 @@ async function computeProof(uuid: string): Promise<string> {
 export async function GET(req: Request): Promise<Response> {
   const { uuid, isNewUuid, companion, isHealRequest } = await resolveChatViewerContext(req);
 
-  const rawSalt = await getOrCreateSalt(uuid);
+  const hadSalt = await getUserSalt(uuid);
+  const rawSalt = await getOrCreateSalt(uuid, hadSalt);
   const mySalt = companion ? `${companion}:${rawSalt}` : rawSalt;
+
+  if (chatRedis && !hadSalt && !isReservedChatUuid(uuid)) {
+    const c = computeNicknameGridCoords(uuid, mySalt);
+    await addNickUnlockedCell(c.flatIndex, c.bIndex);
+    await incrNickTableVersion();
+  }
 
   const [rawMsgs, rawKeywords, rawCount, rawNickRl, warnCount, proof] = await Promise.all([
     chatRedis?.lrange(msgKey(), 0, CHAT_MESSAGES_REDIS_MAX - 1) ?? [],
@@ -70,14 +81,8 @@ export async function GET(req: Request): Promise<Response> {
   const uniqueUuids = [...new Set([...messages.map((m) => m!.clientUuid), ...keywordUuids])]
     .filter((u) => u !== uuid);
 
-  const saltEntries = await Promise.all(
-    uniqueUuids.map(async (u) => {
-      const [s, c] = await Promise.all([getUserSalt(u), getUserCompanion(u)]);
-      return [u, c ? `${c}:${s}` : s] as [string, string];
-    }),
-  );
-
-  const saltMap: Record<string, string> = Object.fromEntries(saltEntries);
+  const saltBatch = chatRedis ? await batchGetEffectiveSalts(uniqueUuids) : new Map<string, string>();
+  const saltMap: Record<string, string> = Object.fromEntries(saltBatch);
   saltMap[uuid] = mySalt;
 
   let nickCooldownRemaining = 0;

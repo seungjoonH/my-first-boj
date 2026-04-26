@@ -14,7 +14,11 @@ import { useSearch } from '@/hooks/useSearch';
 import { useToast } from '@/hooks/useToast';
 import { cleanInvalidCaches, clearCache, loadCache } from '@/lib/cache';
 import { clearProgress, loadProgress } from '@/lib/searchProgress';
-import { loadHistory, clearHistory } from '@/lib/searchHistory';
+import {
+  loadHistory,
+  clearHistory,
+  consumePendingHistoryNavigation,
+} from '@/lib/searchHistory';
 import { BOJ_ID_REGEX } from '@/lib/constants';
 import styles from './page.module.css';
 
@@ -89,12 +93,26 @@ export default function HomePage() {
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
+    const pending = consumePendingHistoryNavigation();
+    if (pending) {
+      setUserId(pending.userId);
+      setActiveTab(pending.mode);
+      if (pending.completedAt !== null) {
+        void handleSearch(pending.userId, pending.mode);
+        setIsInputVisible(false);
+      }
+      else {
+        handleReset();
+        setIsInputVisible(true);
+      }
+      return;
+    }
     const savedUserId = findCachedUserIdForMode(activeTab);
     if (!savedUserId) return;
     setUserId(savedUserId);
     setIsInputVisible(false);
     void handleSearch(savedUserId, activeTab);
-  }, [activeTab, handleSearch]);
+  }, [activeTab, handleSearch, handleReset]);
 
   useEffect(() => {
     if (state !== 'result') return;

@@ -126,3 +126,50 @@ export function clearHistory(): void {
     /* ignore */
   }
 }
+
+/** 닉네임 맵 등 다른 화면에서 홈으로 이동하며 동일 항목을 복원할 때 사용 */
+const SESSION_PENDING_HISTORY_KEY = `${KEY_PREFIX}:session-pending-select`;
+
+export type PendingHistoryPayload = Pick<HistoryEntry, 'userId' | 'mode' | 'completedAt'>;
+
+export function setPendingHistoryNavigation(entry: HistoryEntry): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!BOJ_ID_REGEX.test(entry.userId) || !isSearchMode(entry.mode)) return;
+    sessionStorage.setItem(
+      SESSION_PENDING_HISTORY_KEY,
+      JSON.stringify({
+        userId: entry.userId,
+        mode: entry.mode,
+        completedAt: entry.completedAt,
+      }),
+    );
+  }
+  catch {
+    /* ignore */
+  }
+}
+
+export function consumePendingHistoryNavigation(): PendingHistoryPayload | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(SESSION_PENDING_HISTORY_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(SESSION_PENDING_HISTORY_KEY);
+    const o = JSON.parse(raw) as unknown;
+    if (!o || typeof o !== 'object') return null;
+    const rec = o as Record<string, unknown>;
+    if (typeof rec.userId !== 'string' || !BOJ_ID_REGEX.test(rec.userId)) return null;
+    if (typeof rec.mode !== 'string' || !isSearchMode(rec.mode)) return null;
+    const completedAt =
+      rec.completedAt === null
+        ? null
+        : typeof rec.completedAt === 'number' && Number.isFinite(rec.completedAt)
+          ? rec.completedAt
+          : null;
+    return { userId: rec.userId, mode: rec.mode, completedAt };
+  }
+  catch {
+    return null;
+  }
+}

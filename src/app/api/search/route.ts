@@ -1,5 +1,5 @@
 import { load } from 'cheerio';
-import type { ResultColor, SearchMode, SearchStrategy, SubmissionResult, SseEvent } from '@/types/search';
+import type { ParsedPage, ResultColor, SearchMode, SearchStrategy, SubmissionResult, SseEvent } from '@/types/search';
 import { chatRedis as redis } from '@/lib/chatRedis';
 import {
   BOJ_BASE,
@@ -15,6 +15,12 @@ import {
   resetSearchFailureCount,
   tryAcquireBojSearchSlot,
 } from '@/lib/searchConcurrency';
+import {
+  extractPrevPageAbsoluteUrl,
+  scanTop1PrevSubmissionForMode,
+  shouldChainPrevForHomogeneousPage,
+  TOP1_PREV_MAX_PREV_HOPS,
+} from '@/lib/bojStatusTop1Prev';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0';
 const SECONDS_PER_MINUTE = 60;
@@ -97,14 +103,6 @@ async function fetchBoj(url: string, startedAtMs: number): Promise<string> {
   return fetchBojPage(url);
 }
 
-type ParsedPage = {
-  rowCount: number;
-  firstSubmissionId: string | null;
-  lastRow: SubmissionResult | null;
-  lastNonAcRow: SubmissionResult | null;
-  hasNonAc: boolean;
-};
-
 type SearchCheckpoint = {
   latestId: number;
   lo: number;
@@ -163,7 +161,7 @@ function parsePage(html: string): ParsedPage {
   const rowCount = rows.length;
 
   if (rowCount === 0) {
-    return { rowCount: 0, firstSubmissionId: null, lastRow: null, lastNonAcRow: null, hasNonAc: false };
+    return { rowCount: 0, firstSubmissionId: null, lastRow: null, lastNonAcRow: null, hasNonAc: false, hasAc: false };
   }
 
   const firstSubmissionId = $(rows.get(0)).find('td:first-child').text().trim();
@@ -171,17 +169,19 @@ function parsePage(html: string): ParsedPage {
 
   let lastNonAcRow: SubmissionResult | null = null;
   let hasNonAc = false;
+  let hasAc = false;
 
   const rowArray = rows.toArray();
   for (const el of rowArray) {
     const color = $(el).find('span.result-text').attr('data-color');
+    if (color === 'ac') hasAc = true;
     if (color && color !== 'ac') {
       hasNonAc = true;
       lastNonAcRow = parseRow($, $(el));
     }
   }
 
-  return { rowCount, firstSubmissionId, lastRow, lastNonAcRow, hasNonAc };
+  return { rowCount, firstSubmissionId, lastRow, lastNonAcRow, hasNonAc, hasAc };
 }
 
 function classifyPage(mode: SearchMode, parsed: ParsedPage): Direction {
@@ -343,7 +343,7 @@ async function loadSearchStrategy(): Promise<SearchStrategy> {
   if (!redis) return DEFAULT_SEARCH_STRATEGY;
   try {
     const raw = await redis.get(SEARCH_STRATEGY_CONFIG_KEY);
-    if (raw === 'binary' || raw === 'ternary') return raw;
+    if (raw === 'binary' || raw === 'ternary' || raw === 'top1_prev') return raw;
     return DEFAULT_SEARCH_STRATEGY;
   }
   catch (error) {
@@ -513,42 +513,103 @@ export async function POST(req: Request): Promise<Response> {
           await clearCheckpoint(searchUserId, mode);
         }
 
-        const maxSteps = strategy === 'ternary' ? TERNARY_MAX_STEPS : BINARY_MAX_STEPS;
-        const searchStep = strategy === 'ternary' ? ternaryStep : binaryStep;
-        let bounds = resolveSearchBounds(latestId, checkpoint, maxSteps);
+        switch (strategy) {
+          case 'top1_prev': {
+            await clearCheckpoint(searchUserId, mode);
+            const top1Html = await fetchBoj(buildStatusUrl(searchUserId, 1, mode), startedAtMs);
+            const firstPrevUrl = extractPrevPageAbsoluteUrl(top1Html, BOJ_BASE);
+            if (!firstPrevUrl) {
+              await clearAndSendEmpty();
+              controller.close();
+              return;
+            }
 
-        while (bounds.lo < bounds.hi && bounds.iteration < maxSteps) {
-          send({ type: 'progress', percent: Math.round((bounds.iteration / maxSteps) * 100) });
-          bounds = { ...bounds, iteration: bounds.iteration + 1 };
+            let pageUrl = firstPrevUrl;
+            for (let hop = 0; hop <= TOP1_PREV_MAX_PREV_HOPS; hop++) {
+              ensureWithinDeadline(startedAtMs);
+              send({ type: 'progress', percent: Math.min(99, 10 + hop * 8) });
 
-          const outcome = await searchStep(searchUserId, mode, startedAtMs, bounds);
-          if (outcome.kind === 'found') {
-            if (!outcome.result) {
+              const pageHtml = await fetchBoj(pageUrl, startedAtMs);
+              const parsed = parsePage(pageHtml);
+
+              if (parsed.rowCount === 0) {
+                await clearAndSendEmpty();
+                controller.close();
+                return;
+              }
+
+              if (mode === 'first') {
+                if (!parsed.lastRow) await clearAndSendEmpty();
+                else await sendResult(parsed.lastRow);
+                controller.close();
+                return;
+              }
+
+              const candidate = scanTop1PrevSubmissionForMode(pageHtml, mode);
+              if (candidate) {
+                await sendResult(candidate);
+                controller.close();
+                return;
+              }
+
+              if (!shouldChainPrevForHomogeneousPage(mode, parsed)) {
+                await clearAndSendEmpty();
+                controller.close();
+                return;
+              }
+
+              const chainedUrl = extractPrevPageAbsoluteUrl(pageHtml, BOJ_BASE);
+              if (!chainedUrl) {
+                await clearAndSendEmpty();
+                controller.close();
+                return;
+              }
+              pageUrl = chainedUrl;
+            }
+
+            throw new Error('요청 시간이 초과되었습니다');
+          }
+          case 'binary':
+          case 'ternary': {
+            const maxSteps = strategy === 'ternary' ? TERNARY_MAX_STEPS : BINARY_MAX_STEPS;
+            const searchStep = strategy === 'ternary' ? ternaryStep : binaryStep;
+            let bounds = resolveSearchBounds(latestId, checkpoint, maxSteps);
+
+            while (bounds.lo < bounds.hi && bounds.iteration < maxSteps) {
+              send({ type: 'progress', percent: Math.round((bounds.iteration / maxSteps) * 100) });
+              bounds = { ...bounds, iteration: bounds.iteration + 1 };
+
+              const outcome = await searchStep(searchUserId, mode, startedAtMs, bounds);
+              if (outcome.kind === 'found') {
+                if (!outcome.result) {
+                  await clearAndSendEmpty();
+                }
+                else {
+                  await sendResult(outcome.result);
+                }
+                controller.close();
+                return;
+              }
+
+              bounds = outcome.bounds;
+              await saveSearchBounds(searchUserId, mode, bounds);
+            }
+
+            // 루프 종료: top=lo 페이지에서 최종 추출
+            const finalHtml = await fetchBoj(buildStatusUrl(searchUserId, bounds.lo, mode), startedAtMs);
+            const finalParsed = parsePage(finalHtml);
+
+            send({ type: 'progress', percent: 100 });
+
+            const finalResult = selectFinalResult(mode, finalParsed);
+            if (!finalResult) {
               await clearAndSendEmpty();
             }
             else {
-              await sendResult(outcome.result);
+              await sendResult(finalResult);
             }
-            controller.close();
-            return;
+            break;
           }
-
-          bounds = outcome.bounds;
-          await saveSearchBounds(searchUserId, mode, bounds);
-        }
-
-        // 루프 종료: top=lo 페이지에서 최종 추출
-        const finalHtml = await fetchBoj(buildStatusUrl(searchUserId, bounds.lo, mode), startedAtMs);
-        const finalParsed = parsePage(finalHtml);
-
-        send({ type: 'progress', percent: 100 });
-
-        const finalResult = selectFinalResult(mode, finalParsed);
-        if (!finalResult) {
-          await clearAndSendEmpty();
-        }
-        else {
-          await sendResult(finalResult);
         }
       }
       catch (err) {

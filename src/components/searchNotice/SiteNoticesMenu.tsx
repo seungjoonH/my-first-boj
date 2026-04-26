@@ -3,7 +3,11 @@
 import { Fragment, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { CloseButton } from '@/components/closeButton/CloseButton';
 import { IconButton } from '@/components/iconButton/IconButton';
-import { getVisibleSearchNoticesOrdered } from '@/notices/searchNoticesRegistry';
+import { buildCls } from '@/lib/buildCls';
+import {
+  getVisibleSearchNoticesOrdered,
+  SEARCH_NOTICE_RECENT_HIGHLIGHT_ID,
+} from '@/notices/searchNoticesRegistry';
 import type { SearchNoticeDef } from '@/notices/type';
 import noticeStyles from './SearchNotice.module.css';
 import styles from './SiteNoticesMenu.module.css';
@@ -93,6 +97,7 @@ export function SiteNoticesMenu() {
       <IconButton
         ref={buttonRef}
         variant="notice"
+        className={styles.noticeBellRecent}
         onClick={handleToggleDropdown}
         aria-haspopup="listbox"
         aria-expanded={dropdownOpen}
@@ -104,12 +109,14 @@ export function SiteNoticesMenu() {
         {visibleNotices.length === 0
           ? <div className={styles.empty}>표시할 공지가 없습니다</div>
           : visibleNotices.map((entry) => {
+            const isRecentNotice = entry.id === SEARCH_NOTICE_RECENT_HIGHLIGHT_ID;
+            const itemClass = buildCls(styles.item, isRecentNotice && styles.itemRecentRow);
             return (
               <button
                 key={entry.id}
                 type="button"
                 role="option"
-                className={styles.item}
+                className={itemClass}
                 onClick={() => {
                   openNotice(entry);
                 }}

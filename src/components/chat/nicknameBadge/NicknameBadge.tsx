@@ -29,7 +29,7 @@ export function AdminBadge() {
   );
 }
 
-export function NicknameBadgeBase({ aBadge, bBadge, bVariant }: NicknameBadgeBaseProps) {
+export function NicknameBadgeBase({ aBadge, bBadge, bVariant, layout = 'default' }: NicknameBadgeBaseProps) {
   const aCls = buildCls(
     styles.badge,
     isJudging(aBadge) ? styles['badgeA--judging'] : isTime(aBadge) ? styles['badgeA--time'] : styles.badgeA,
@@ -38,7 +38,7 @@ export function NicknameBadgeBase({ aBadge, bBadge, bVariant }: NicknameBadgeBas
   const aParts = splitMemoryByteSuffix(aBadge);
 
   return (
-    <span className={styles.root}>
+    <span className={buildCls(styles.root, layout === 'mapCell' && styles['root--mapCell'])}>
       <span className={aCls}>
         {aParts.unitPart !== undefined ? (
           <>

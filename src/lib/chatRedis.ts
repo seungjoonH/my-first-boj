@@ -42,12 +42,53 @@ export function onlineSetKey(): string {
   return 'chat:online:conn';
 }
 
+/** `SCARD` = “지금 열어 둔 SSE가 1개 이상인” 고유 출석 키 수(사람·anon 세션 단위) */
+export function onlineUniqSetKey(): string {
+  return 'chat:online:uniq';
+}
+
+/** 필드=출석 키, 값=현재 열린 SSE(스트림) 수 — 동일 키로 다중 탭 시 >1 */
+export function onlineRefHashKey(): string {
+  return 'chat:online:refc';
+}
+
 export function msgRlKey(scopeKey: string): string {
   return `chat:rl:msg:${scopeKey}`;
 }
 
 export function nickRlKey(uuid: string): string {
   return `chat:rl:nick:${uuid}`;
+}
+
+export function nickTableVerKey(): string {
+  return 'chat:nick:table:ver';
+}
+
+export function nickTableSnapshotKey(): string {
+  return 'chat:nick:table:snapshot';
+}
+
+/** 닉 테이블 재빌드 동시 실행 방지(짧은 TTL) */
+export function nickTableRebuildLockKey(): string {
+  return 'chat:nick:table:rebuild_lock';
+}
+
+export function nickUnlockedSetKey(): string {
+  return 'chat:nick:unlocked';
+}
+
+export function nickUnlockedMemberKey(flatIndex: number, bIndex: number): string {
+  return `${flatIndex}:${bIndex}`;
+}
+
+export async function incrNickTableVersion(): Promise<number> {
+  if (!chatRedis) return 0;
+  return Number(await chatRedis.incr(nickTableVerKey()));
+}
+
+export async function addNickUnlockedCell(flatIndex: number, bIndex: number): Promise<void> {
+  if (!chatRedis) return;
+  await chatRedis.sadd(nickUnlockedSetKey(), nickUnlockedMemberKey(flatIndex, bIndex));
 }
 
 const NICK_RL_TTL_MIN = 1;
@@ -120,10 +161,52 @@ export async function getEffectiveSalt(uuid: string): Promise<string> {
   return c ? `${c}:${s}` : s;
 }
 
-export async function getOrCreateSalt(uuid: string): Promise<string> {
+
+export async function batchGetEffectiveSalts(
+  uuids: readonly string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (!chatRedis || uuids.length === 0) return out;
+  const unique = [...new Set(uuids.map((u) => String(u).trim()).filter((u) => u.length > 0))];
+  if (unique.length === 0) return out;
+
+  const [saltMapRaw, compMapRaw] = await Promise.all([
+    chatRedis.hmget(userSaltHashKey(), ...unique),
+    chatRedis.hmget(userCompanionHashKey(), ...unique),
+  ]);
+
+  const sm =
+    saltMapRaw !== null && typeof saltMapRaw === 'object'
+      ? (saltMapRaw as Record<string, unknown>)
+      : {};
+  const cm =
+    compMapRaw !== null && typeof compMapRaw === 'object'
+      ? (compMapRaw as Record<string, unknown>)
+      : {};
+
+  for (const u of unique) {
+    const sRaw = sm[u];
+    const cRaw = cm[u];
+    const s = sRaw != null && String(sRaw) !== '' ? String(sRaw) : '';
+    const c = cRaw != null && String(cRaw) !== '' ? String(cRaw) : '';
+    out.set(u, c ? `${c}:${s}` : s);
+  }
+  return out;
+}
+
+/**
+ * @param existingSaltHint `init` 등에서 이미 `getUserSalt`로 읽은 값이면 전달 — 중복 `HGET` 생략
+ */
+export async function getOrCreateSalt(uuid: string, existingSaltHint?: string): Promise<string> {
   if (!chatRedis) return 'default';
 
-  const existing = await getUserSalt(uuid);
+  let existing: string;
+  if (existingSaltHint !== undefined) {
+    existing = existingSaltHint;
+  }
+  else {
+    existing = await getUserSalt(uuid);
+  }
   if (existing) return existing;
 
   const newSalt = crypto.randomUUID();

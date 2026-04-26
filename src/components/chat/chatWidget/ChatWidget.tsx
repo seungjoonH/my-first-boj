@@ -7,6 +7,7 @@ import { NicknameBar } from '../nicknameBar/NicknameBar';
 import { MessageList } from '../messageList/MessageList';
 import { ChatInput } from '../chatInput/ChatInput';
 import { CloseButton } from '@/components/closeButton/CloseButton';
+import { LoadingEllipsisLabel } from '@/components/loadingEllipsis/LoadingEllipsisLabel';
 import { AdminBadge, NicknameBadgeBase } from '../nicknameBadge/NicknameBadge';
 import { TierIcon } from '../tierIcon/TierIcon';
 import type { ChatWidgetProps } from './type';
@@ -136,7 +137,11 @@ export function ChatWidget({
           />
         </div>
       ) : (
-        <div className={styles.loading}>불러오는 중...</div>
+        <div className={styles.loading}>
+          <div className={styles.loadingLineWrap}>
+            <LoadingEllipsisLabel className={styles.loadingEllipsis} />
+          </div>
+        </div>
       )}
       <div className={styles.sectionFoot}>
         <ChatInput

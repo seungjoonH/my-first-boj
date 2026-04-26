@@ -5,6 +5,38 @@
   flex-wrap: wrap;
 }
 
+/* 닉네임 도감 셀: 줄바꿈 없음. A(앞 문구)는 줄이지 않음 — 잘림은 B(결과)만 말줄임 */
+.root--mapCell {
+  flex: 1 1 0%;
+  flex-wrap: nowrap;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.root--mapCell > .badge {
+  font-size: 11px;
+}
+
+.root--mapCell > .badge:first-of-type {
+  flex-shrink: 0;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.root--mapCell > .badge:last-of-type {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.root--mapCell > .separator {
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
 .separator {
   font-size: 10px;
   color: var(--color-muted);

@@ -1,5 +1,15 @@
-import { chatRedis, nickRlKey, setUserSalt, getUserCompanion, getNickRlTtlSec } from '@/lib/chatRedis';
+import {
+  addNickUnlockedCell,
+  chatRedis,
+  getEffectiveSalt,
+  getUserCompanion,
+  getNickRlTtlSec,
+  incrNickTableVersion,
+  nickRlKey,
+  setUserSalt,
+} from '@/lib/chatRedis';
 import { isReservedChatUuid } from '@/lib/chatAdmin';
+import { computeNicknameGridCoords } from '@/lib/chatNickname';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -24,6 +34,11 @@ export async function POST(req: Request): Promise<Response> {
     const remainingSeconds = typeof ttl === 'number' && ttl > 0 ? ttl : 0;
     return Response.json({ ok: false, error: 'rate_limit', remainingSeconds });
   }
+
+  const prevEff = await getEffectiveSalt(uuid);
+  const prevCoords = computeNicknameGridCoords(uuid, prevEff);
+  await addNickUnlockedCell(prevCoords.flatIndex, prevCoords.bIndex);
+  await incrNickTableVersion();
 
   const newSalt = crypto.randomUUID();
   await setUserSalt(uuid, newSalt);

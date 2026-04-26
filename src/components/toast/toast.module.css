@@ -10,8 +10,10 @@
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease;
-  white-space: nowrap;
-  z-index: 100;
+  white-space: normal;
+  max-width: min(92vw, 420px);
+  text-align: center;
+  z-index: 3100000;
 }
 
 .root.visible {

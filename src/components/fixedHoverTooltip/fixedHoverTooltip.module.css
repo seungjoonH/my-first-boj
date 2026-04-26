@@ -1,0 +1,28 @@
+/* KeywordBackground `.tooltip` 과 동일 비주얼 — 고정 위치 호버 툴팁 공통 */
+.anchor {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 100%;
+}
+
+.tooltip {
+  position: fixed;
+  left: var(--tooltip-x, 0px);
+  top: var(--tooltip-y, 0px);
+  transform: translate(-50%, -100%);
+  background: rgba(250, 250, 250, 0.96);
+  color: var(--color-text);
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 5px 8px;
+  white-space: normal;
+  max-width: min(92vw, 360px);
+  text-align: center;
+  border: 1px solid var(--color-border);
+  /* body 포털 + 격자·잠금 등 어떤 스택보다 위 */
+  z-index: 3000000;
+  pointer-events: none;
+}

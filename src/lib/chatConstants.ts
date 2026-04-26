@@ -5,15 +5,18 @@ export const KEYWORD_DISPLAY_MAX = 200;
 export const KEYWORD_PARALLAX_FACTOR = 0.4;
 
 export const MSG_RL_TTL_SEC = 10;
-/** 닉네임 변경 직후 Redis에 걸리는 쿨다운 TTL(초). `NICK_RL_TTL_CONFIG_KEY`로 덮어쓸 수 있음 */
-export const NICK_RL_TTL_SEC = 86400;
-/** Redis 전역 설정 키 — 값이 없으면 `NICK_RL_TTL_SEC` 사용 */
+
+export const NICK_RL_TTL_SEC = 30;
 export const NICK_RL_TTL_CONFIG_KEY = 'chat:config:nick_rl_ttl_sec';
 
-export const SSE_POLL_BASE_MS = 6000;
-export const SSE_POLL_MAX_MS = 10000;
+export const SSE_POLL_BASE_MS = 10_000;
+export const SSE_POLL_MAX_MS = 15_000;
 export const SSE_BACKOFF_THRESHOLD = 5;
-export const SSE_HEARTBEAT_MS = 30000;
+export const SSE_HEARTBEAT_MS = 30_000;
+/** 스트림 폴링 시 `LRANGE` — 전체 200 대신 꼬리만 (초과 시 한 번만 전체 조회) */
+export const SSE_STREAM_MSG_TAIL = 120;
+/** 스트림 루프마다 `touchOnline` 하지 않고 이 간격마다만 (접속자 수 갱신 지연 허용) */
+export const SSE_ONLINE_TOUCH_INTERVAL_MS = 25_000;
 export const WIDGET_INACTIVITY_MINUTES = 1;
 export const WIDGET_INACTIVITY_MS = WIDGET_INACTIVITY_MINUTES * 60 * 1000;
 
@@ -24,8 +27,8 @@ export const CHAT_SESSION_STORAGE_KEY = 'chat-cs';
 export const CHAT_LOCAL_STORAGE_KEY = 'chat-cl';
 export const MAX_WARN_COUNT = 3;
 
-export const HEAL_LOCAL_INTERVAL_MS = 20_000;
-export const HEAL_COOKIE_INTERVAL_MS = 30_000;
+export const HEAL_LOCAL_INTERVAL_MS = 60_000;
+export const HEAL_COOKIE_INTERVAL_MS = 90_000;
 export const HEAL_COOKIE_COOLDOWN_MS = 25_000;
 export const KW_ENTER_DELAY_STEP_MS = 12;
 export const TOOLTIP_Y_OFFSET_PX = 8;
@@ -141,6 +144,14 @@ export const B_BADGES: string[] = [
   '출력 형식이 잘못되었습니다',
   '채점 준비 중',
 ];
+
+/** `B_BADGES` 열별 티어 — `getBBadgeTier` / 격자 표시용 */
+export const B_BADGE_TIERS = [1, 2, 3, 3, 3, 4, 4, 5, 5] as const;
+
+/** `pickBIndex`: `fnv32(base + 'B') % 100` 구간 가중치, 합 100 */
+export const B_NICKNAME_WEIGHTS = [4, 8, 6, 6, 6, 20, 20, 15, 15] as const;
+
+export const NICKNAME_B_COL_COUNT = 9;
 
 export type BBadgeVariant =
   | 'ac'

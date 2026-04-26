@@ -8,10 +8,10 @@ export function useToast() {
   const [message, setMessage] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showToast = useCallback((msg: string) => {
+  const showToast = useCallback((msg: string, durationMs: number = TOAST_DURATION_MS) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setMessage(msg);
-    timerRef.current = setTimeout(() => setMessage(null), TOAST_DURATION_MS);
+    timerRef.current = setTimeout(() => setMessage(null), durationMs);
   }, []);
 
   return { message, showToast };

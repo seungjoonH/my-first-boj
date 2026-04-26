@@ -6,6 +6,15 @@
   padding: 16px 20px;
 }
 
+.brandLink {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  color: inherit;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -18,6 +27,67 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.mapIconLink {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+}
+
+.mapIconLink:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* 닉네임 도감 진입: books.svg — viewBox 여백 때문에 마스크만 한 단계 키움 */
+.mapBooksGlyph {
+  --map-nav-glyph: 24px;
+  display: block;
+  width: var(--map-nav-glyph);
+  min-width: var(--map-nav-glyph);
+  height: var(--map-nav-glyph);
+  min-height: var(--map-nav-glyph);
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask-image: url("/icons/books.svg");
+  mask-image: url("/icons/books.svg");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: var(--map-nav-glyph) var(--map-nav-glyph);
+  mask-size: var(--map-nav-glyph) var(--map-nav-glyph);
+  pointer-events: none;
+}
+
+/* 닉네임 도감 화면에서만: 홈으로 */
+.mapHomeGlyph {
+  --map-nav-glyph: 24px;
+  display: block;
+  width: var(--map-nav-glyph);
+  min-width: var(--map-nav-glyph);
+  height: var(--map-nav-glyph);
+  min-height: var(--map-nav-glyph);
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask-image: url("/icons/home.svg");
+  mask-image: url("/icons/home.svg");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: var(--map-nav-glyph) var(--map-nav-glyph);
+  mask-size: var(--map-nav-glyph) var(--map-nav-glyph);
+  pointer-events: none;
 }
 
 .logoIcon {

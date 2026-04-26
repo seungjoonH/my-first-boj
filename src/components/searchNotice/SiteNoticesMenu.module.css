@@ -3,6 +3,17 @@
   flex-shrink: 0;
 }
 
+/* 최근 공지 강조 — 벨: 크림 배경 + 골드 테두리(#e4b34e) / 목록 해당 줄: 크림 배경만 */
+.noticeBellRecent {
+  background: #fff9e6;
+  border-color: #e4b34e;
+}
+
+.noticeBellRecent:hover {
+  background: #fff3d6;
+  border-color: #e4b34e;
+}
+
 .panel {
   position: absolute;
   top: calc(100% + 4px);
@@ -52,4 +63,12 @@
 
 .item:hover {
   background: #f4f4f5;
+}
+
+.item.itemRecentRow {
+  background: #fff9e6;
+}
+
+.item.itemRecentRow:hover {
+  background: #fff3d6;
 }
