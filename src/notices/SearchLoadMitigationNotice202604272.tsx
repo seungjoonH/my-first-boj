@@ -37,9 +37,8 @@ export function SearchLoadMitigationNotice202604272() {
             </strong>
           </p>
           <p className={styles.intro}>
-            BOJ의 정확한 서비스 종료 시각은 아직 불확정일 수 있으며, 본 앱에
-            표기된 기준은 추후 변경·업데이트될 수 있습니다. 관련 내용이
-            확인되는 대로 반영하겠습니다. 양해 부탁드립니다.
+            BOJ·운영 정책에 따라 본 앱에 표기된 종료 기준은 추후
+            조정·안내될 수 있습니다. 확인되는 대로 공지·반영하겠습니다. 양해 부탁드립니다.
           </p>
         </>
       ) : (
@@ -59,14 +58,10 @@ export function SearchLoadMitigationNotice202604272() {
             </strong>
           </p>
           <p className={styles.intro}>
-            단, BOJ의 정확한 서비스 종료 시점이{' '}
-            <strong className={styles.introTime}>4월 28일 00:00:00</strong>
-            인지{' '}
-            <strong className={styles.introTime}>4월 28일 23:59:59</strong>
-            인지 아직 불분명하여 위 카운트다운은{' '}
-            <strong className={styles.introTime}>추후 변경될 수 있습니다.</strong>
-            {' '}
-            관련 내용이 확인되는 대로 업데이트할 예정이오니 양해 부탁드립니다.
+            <strong className={styles.introTime}>4월 28일 00:00:00</strong> 시점에 BOJ
+            서비스가 종료되지 않은 것이 확인되어, 카운트다운 기준을{' '}
+            <strong className={styles.introTime}>4월 28일 23:59:59</strong>로
+            업데이트하였습니다.
           </p>
         </>
       )}

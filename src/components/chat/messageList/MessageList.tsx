@@ -49,8 +49,11 @@ function formatDateMarker(ms: number, serviceEndMs: number): string {
   const endM = end.toLocaleString('en-CA', { timeZone: KST_TIME_ZONE, month: '2-digit' });
   const endD = end.toLocaleString('en-CA', { timeZone: KST_TIME_ZONE, day: '2-digit' });
   const endDayStart = new Date(`${endY}-${endM}-${endD}T00:00:00+09:00`).getTime();
-  const dDay = Math.max(0, Math.floor((endDayStart - dayStart) / DAY_MS));
-  return `D-${dDay} (${yyyy}.${mm}.${dd})`;
+  /** 양수: 종료일 n일 전(D-n), 0: 종료일(D-day), 음수: 종료일 n일 지남(D+n) */
+  const diff = Math.floor((endDayStart - dayStart) / DAY_MS);
+  const dLabel
+    = diff > 0 ? `D-${diff}` : diff === 0 ? 'D-day' : `D+${-diff}`;
+  return `${dLabel} (${yyyy}.${mm}.${dd})`;
 }
 
 function renderMessageText(

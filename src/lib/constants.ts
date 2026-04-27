@@ -1,5 +1,4 @@
-/** BOJ 서비스 종료 시각(ms) 기본값. Redis `config:service_end_ms` 없을 때 사용 */
-export const SERVICE_END_MS_DEFAULT = new Date('2026-04-28T00:00:00+09:00').getTime();
+export const SERVICE_END_MS_DEFAULT = new Date('2026-04-28T23:59:59+09:00').getTime();
 
 export const BOJ_BASE = 'https://www.acmicpc.net';
 
