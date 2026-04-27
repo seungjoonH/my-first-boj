@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BOJ_SCRAPING_NOTICE_POSTED_AT_MS, SERVICE_END_MS } from '@/lib/constants';
+import { useServiceEndMs } from '@/context/ServiceEndMsContext';
 import { formatRelativePastKo } from '@/lib/relativeTimeKo';
 import styles from '@/components/searchNotice/SearchNotice.module.css';
 
 const BOJ_SCRAPING_NOTICE_URL = 'https://www.acmicpc.net/board/view/166082';
+/** 본문 “n분 전” — 게시판 글 기준(고정) */
+const NOTICE_POSTED_AT_MS = new Date('2026-04-19T16:55:05+09:00').getTime();
 
 function formatServiceEndDateKo(ms: number): string {
   return new Intl.DateTimeFormat('ko-KR', {
@@ -20,13 +22,14 @@ function formatServiceEndDateKo(ms: number): string {
  * 2026-04-19 — 백준 서버 부하 완화 안내 (검색 띠 공지 → 헤더 공지 메뉴로 이전)
  */
 export function SearchLoadMitigationNotice20260419() {
+  const endMs = useServiceEndMs();
   const [postedAgoLabel, setPostedAgoLabel] = useState(() =>
-    formatRelativePastKo(BOJ_SCRAPING_NOTICE_POSTED_AT_MS, Date.now()),
+    formatRelativePastKo(NOTICE_POSTED_AT_MS, Date.now()),
   );
 
   useEffect(() => {
     function refreshPostedAgo(): void {
-      setPostedAgoLabel(formatRelativePastKo(BOJ_SCRAPING_NOTICE_POSTED_AT_MS, Date.now()));
+      setPostedAgoLabel(formatRelativePastKo(NOTICE_POSTED_AT_MS, Date.now()));
     }
     refreshPostedAgo();
     const id = window.setInterval(refreshPostedAgo, 60_000);
@@ -44,7 +47,7 @@ export function SearchLoadMitigationNotice20260419() {
       </p>
       <p className={styles.intro}>
         이에 따라 이 서비스의 동작 방식과 새 버전(v1.1.4)에서 달라진 점을 함께 안내합니다.{' '}
-        <strong className={styles.introEndDate}>{formatServiceEndDateKo(SERVICE_END_MS)}</strong>
+        <strong className={styles.introEndDate}>{formatServiceEndDateKo(endMs)}</strong>
         까지 백준 온라인 저지 서비스에 무리가 가지 않도록 최선을 다하겠습니다.
       </p>
 

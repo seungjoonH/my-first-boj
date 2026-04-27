@@ -1,10 +1,5 @@
-export const SERVICE_END_MS = new Date('2026-04-28T00:00:00+09:00').getTime();
-
-/** 게시판 공지 게시 시각 (KST) — 상대 시간 표기 기준 */
-export const BOJ_SCRAPING_NOTICE_POSTED_AT_MS = new Date('2026-04-19T16:55:05+09:00').getTime();
-
-/** 탐색 전략 개선 공지 — 상대 시간·레지스트리 sortKey 기준 (KST, 참고 글 시각에 맞춤) */
-export const SEARCH_STRATEGY_UPDATE_NOTICE_POSTED_AT_MS = new Date('2026-04-26T21:45:33+09:00').getTime();
+/** BOJ 서비스 종료 시각(ms) 기본값. Redis `config:service_end_ms` 없을 때 사용 */
+export const SERVICE_END_MS_DEFAULT = new Date('2026-04-28T00:00:00+09:00').getTime();
 
 export const BOJ_BASE = 'https://www.acmicpc.net';
 

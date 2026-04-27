@@ -20,6 +20,8 @@ import {
   consumePendingHistoryNavigation,
 } from '@/lib/searchHistory';
 import { BOJ_ID_REGEX } from '@/lib/constants';
+import { useServiceEndMs } from '@/context/ServiceEndMsContext';
+import { useServiceEndNow } from '@/hooks/useServiceEndNow';
 import styles from './page.module.css';
 
 const CACHE_KEY_PREFIX = 'boj-first:';
@@ -65,6 +67,10 @@ export default function HomePage() {
   }, []);
 
   const { state, progress, result, handleSearch, handleReset } = useSearch(showToast, handleHistoryChange);
+
+  const now = useServiceEndNow();
+  const serviceEndMs = useServiceEndMs();
+  const isServiceEnded = now >= serviceEndMs;
 
   // 마운트 시 초기화
   useEffect(() => {
@@ -248,7 +254,17 @@ export default function HomePage() {
           <div className={styles.content}>
             <div className={styles.headline}>
               <h1 className={styles.title}>나의 첫 백준은?</h1>
-              <p className={styles.subtitle}>나의 첫 제출 내역을 확인해보세요.</p>
+              <p className={styles.subtitle}>
+                {isServiceEnded ? (
+                  <>
+                    백준 서비스가 종료되었습니다.
+                    <br />
+                    기존에 조회된 제출 내역만 확인할 수 있습니다.
+                  </>
+                ) : (
+                  '나의 첫 제출 내역을 확인해보세요.'
+                )}
+              </p>
             </div>
             <Countdown />
             <div className={styles.tabsRow}>

@@ -253,6 +253,11 @@
   word-break: break-all;
 }
 
+.countdownCode {
+  font-size: 0.95em;
+  font-family: ui-monospace, "Cascadia Code", monospace;
+}
+
 .link:hover {
   text-decoration: underline;
 }

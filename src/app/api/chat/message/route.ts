@@ -1,7 +1,7 @@
 import { chatRedis, msgKey, kwKey, kwSeqKey, msgRlKey, getUserWarnCount, isUserBanned, setUserBanned } from '@/lib/chatRedis';
 import { MESSAGE_MAX_LEN, KEYWORD_REDIS_MAX, MSG_RL_TTL_SEC, CHAT_MESSAGES_REDIS_MAX, MAX_WARN_COUNT } from '@/lib/chatConstants';
 import { isReservedChatUuid } from '@/lib/chatAdmin';
-import { SERVICE_END_MS } from '@/lib/constants';
+import { getServiceEndMs } from '@/lib/serviceEndMs';
 import { buildKeywordValue, normalizeKeywordToken, KEYWORD_REGEX } from '@/lib/chatKeyword';
 
 export const runtime = 'edge';
@@ -22,7 +22,8 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ ok: false, error: 'forbidden' }, { status: 403 });
   }
 
-  if (Date.now() >= SERVICE_END_MS) {
+  const serviceEndMs = await getServiceEndMs();
+  if (Date.now() >= serviceEndMs) {
     return Response.json({ ok: false, error: 'ended' });
   }
 

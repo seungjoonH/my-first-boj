@@ -3,7 +3,8 @@
 import { memo, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { formatAbsolute, formatRelative, getDurationTotals } from '@/lib/formatDate';
 import { ResultBadge } from '@/components/resultBadge/ResultBadge';
-import { BOJ_BASE, SERVICE_END_MS } from '@/lib/constants';
+import { BOJ_BASE } from '@/lib/constants';
+import { useServiceEndMs } from '@/context/ServiceEndMsContext';
 import type { ResultCardProps } from './type';
 import styles from './resultCard.module.css';
 
@@ -33,6 +34,7 @@ function SubmittedAtLiveText({ submittedAt, showRelative }: { submittedAt: strin
 
 function FirstModeLiveSection({ submittedAt, userId }: { submittedAt: string; userId: string }) {
   const [now, setNow] = useState(() => Date.now());
+  const serviceEndMs = useServiceEndMs();
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -41,20 +43,20 @@ function FirstModeLiveSection({ submittedAt, userId }: { submittedAt: string; us
     return () => window.clearInterval(id);
   }, []);
 
-  const effectiveNow = now >= SERVICE_END_MS ? SERVICE_END_MS : now;
+  const effectiveNow = now >= serviceEndMs ? serviceEndMs : now;
   const relativeDisplay = formatRelative(submittedAt, effectiveNow);
   const totals = getDurationTotals(submittedAt, effectiveNow);
 
   const submittedAtMs = new Date(submittedAt.replace(' ', 'T') + '+09:00').getTime();
-  const totalDuration = Math.max(1, SERVICE_END_MS - submittedAtMs);
+  const totalDuration = Math.max(1, serviceEndMs - submittedAtMs);
   const elapsed = Math.max(0, effectiveNow - submittedAtMs);
   const journeyPercent = Math.min(100, (elapsed / totalDuration) * 100);
   const journeyPercentText = journeyPercent === 100 ? '100%' : `${journeyPercent.toFixed(6)}%`;
   const journeyFillStyle = { '--journey-percent': `${journeyPercent}%` } as CSSProperties;
-  const isBeforeServiceEnd = now < SERVICE_END_MS;
+  const isBeforeServiceEnd = now < serviceEndMs;
   const togetherStatusText = isBeforeServiceEnd ? '함께하고 있습니다.' : '함께 했습니다.';
   const startLabel = submittedAt.split(' ')[0].replace(/-/g, '.');
-  const endLabel = new Date(SERVICE_END_MS).toLocaleDateString('ko-KR', {
+  const endLabel = new Date(serviceEndMs).toLocaleDateString('ko-KR', {
     timeZone: 'Asia/Seoul',
     year: 'numeric',
     month: '2-digit',

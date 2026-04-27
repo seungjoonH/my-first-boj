@@ -7,8 +7,8 @@ import {
   DEFAULT_SEARCH_STRATEGY,
   SEARCH_EXPLORE_MODE,
   SEARCH_STRATEGY_CONFIG_KEY,
-  SERVICE_END_MS,
 } from '@/lib/constants';
+import { getServiceEndMs } from '@/lib/serviceEndMs';
 import type { BojSearchSlotReleaseKind } from '@/lib/searchConcurrency';
 import {
   releaseBojSearchSlot,
@@ -459,7 +459,8 @@ export async function POST(req: Request): Promise<Response> {
     void redis?.set(rlKey, '1', { ex: 30 }).catch((e) => console.error('[rl] set failed', e));
   }
 
-  if (Date.now() >= SERVICE_END_MS) {
+  const serviceEndMs = await getServiceEndMs();
+  if (Date.now() >= serviceEndMs) {
     return createSseResponse([{ type: 'ended' }]);
   }
 

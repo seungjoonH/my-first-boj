@@ -5,7 +5,7 @@ import { generateNickname, getFinalChatTier } from '@/lib/chatNickname';
 import { B_BADGE_VARIANT_MAP, KEYWORD_ID_PREFIX } from '@/lib/chatConstants';
 import { KEYWORD_REGEX } from '@/lib/chatKeyword';
 import { buildCls } from '@/lib/buildCls';
-import { SERVICE_END_MS } from '@/lib/constants';
+import { useServiceEndMs } from '@/context/ServiceEndMsContext';
 import { NicknameBadgeBase, AdminBadge } from '../nicknameBadge/NicknameBadge';
 import { TierIcon } from '../tierIcon/TierIcon';
 import type { MessageListProps } from './type';
@@ -41,10 +41,10 @@ function formatMessageTime(ms: number): string {
   return timePartFormatter.format(ms);
 }
 
-function formatDateMarker(ms: number): string {
+function formatDateMarker(ms: number, serviceEndMs: number): string {
   const [yyyy, mm, dd] = getKstDayKey(ms).split('-');
   const dayStart = new Date(`${yyyy}-${mm}-${dd}T00:00:00+09:00`).getTime();
-  const end = new Date(SERVICE_END_MS);
+  const end = new Date(serviceEndMs);
   const endY = end.toLocaleString('en-CA', { timeZone: KST_TIME_ZONE, year: 'numeric' });
   const endM = end.toLocaleString('en-CA', { timeZone: KST_TIME_ZONE, month: '2-digit' });
   const endD = end.toLocaleString('en-CA', { timeZone: KST_TIME_ZONE, day: '2-digit' });
@@ -120,6 +120,7 @@ export function MessageList({
   onInteraction,
   onKeywordHover,
 }: MessageListProps) {
+  const serviceEndMs = useServiceEndMs();
   const rootRef = useRef<HTMLDivElement>(null);
   const bubbleRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -395,7 +396,7 @@ export function MessageList({
           >
             {isFirstMessageOfDay && (
               <div className={styles.dateMarker}>
-                {formatDateMarker(msg.timestamp)}
+                {formatDateMarker(msg.timestamp, serviceEndMs)}
               </div>
             )}
             {!isMine && !isSameSenderAsPrev && (

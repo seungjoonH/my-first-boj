@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/react';
 import { VersionBadge } from '@/components/versionBadge/VersionBadge';
 import { ChatRoot } from '@/components/chat/ChatRoot';
+import { ServiceEndMsProvider } from '@/context/ServiceEndMsContext';
 import './globals.css';
 
 const DEFAULT_SITE_URL = 'https://my-first-boj.vercel.app';
@@ -66,11 +67,13 @@ export default function RootLayout({
         <meta name="google-site-verification" content="Sy_sI7sR96vgzPEqnKe_LsC6flFNNqgakN8EEH0owkg" />
       </head>
       <body>
-        <div className="appShell">
-          {children}
-        </div>
-        <VersionBadge />
-        <ChatRoot />
+        <ServiceEndMsProvider>
+          <div className="appShell">
+            {children}
+          </div>
+          <VersionBadge />
+          <ChatRoot />
+        </ServiceEndMsProvider>
         <Analytics />
       </body>
     </html>
