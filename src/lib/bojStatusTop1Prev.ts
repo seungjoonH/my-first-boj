@@ -1,9 +1,10 @@
 import { load } from 'cheerio';
-import type { AnyNode } from 'domhandler';
 import type { ParsedPage, ResultColor, SearchMode, SubmissionResult } from '@/types/search';
 
 /** `top1_prev` 전략에서 `#prev_page` 체인 최대 횟수 (무한 루프·비정상 HTML 방지) */
 export const TOP1_PREV_MAX_PREV_HOPS = 50_000;
+
+type CheerioSelector = Parameters<ReturnType<typeof load>>[0];
 
 function normalizeResultColor(rawColor: string): ResultColor {
   const normalizedColor = rawColor.trim().toLowerCase();
@@ -24,7 +25,7 @@ function normalizeResultColor(rawColor: string): ResultColor {
   }
 }
 
-function parseStatusRow($: ReturnType<typeof load>, el: AnyNode): SubmissionResult {
+function parseStatusRow($: ReturnType<typeof load>, el: CheerioSelector): SubmissionResult {
   const row = $(el);
   const submissionId = row.find('td:first-child').text().trim();
   const problemLink = row.find('td a[href^="/problem/"]').first();
@@ -79,10 +80,10 @@ export function scanTop1PrevSubmissionForMode(html: string, mode: SearchMode): S
     const dataColor = $(el).find('span.result-text').attr('data-color');
     switch (mode) {
       case 'correct':
-        if (dataColor === 'ac') return parseStatusRow($, el as AnyNode);
+        if (dataColor === 'ac') return parseStatusRow($, el);
         break;
       case 'wrong':
-        if (dataColor && dataColor !== 'ac') return parseStatusRow($, el as AnyNode);
+        if (dataColor && dataColor !== 'ac') return parseStatusRow($, el);
         break;
       default:
         break;
